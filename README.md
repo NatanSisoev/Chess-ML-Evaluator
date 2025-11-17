@@ -90,6 +90,7 @@ Control central relatiu
     - Negative sign recall: 0.5427807486631016
 - new metric: `centipawn_accuracy`, measures the accuracy of the prediction being in +- tolerance rango of the real evaluation
 - predicted piece values: predicts the value of each piece (the coefficients of the linear regressor)
+- new graph: AUC TOL-ACC (maybe a good metric to keep an eye on)
 
 ##### 2025-11-12 - Natan Sisoev
 
