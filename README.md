@@ -12,7 +12,64 @@ To download run (see [official documentation](https://www.kaggle.com/docs/api)):
 kaggle datasets download -d ronakbadhe/chess-evaluations -p data --unzip
 ```
 
+# Features
+
+1. Material
+Nombre de peons blanc/negre
+Nombre de cavalls blanc/negre
+Nombre d’alfils blanc/negre
+Nombre de torres blanc/negre
+Nombre de dames blanc/negre
+Material total blanc
+Material total negre
+Diferència de material (blanc − negre)
+Peons passats
+Peons doblats
+Peons aïllats
+Peons endarrerits
+Peons candidats a promoció
+2. Mobilitat
+Mobilitat total de les peces blanques
+Mobilitat total de les peces negres
+Mobilitat per peça (cavalls, alfils, torres, dames)
+3. Seguretat del rei
+Distància del rei a la línia de fons
+Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
+Torres connectades defensant el rei
+Enroc fet (sí/no)
+Enroc disponible (sí/no)
+Nombre de peces enemigues atacant caselles al voltant del rei
+4. Control del tauler
+Nombre de caselles centrals controlades (d4, d5, e4, e5) (també podríem valorar com si fos una convolució, tot el taulell, així tenim en compte totes les caselles, i hi assignem el valor en funció del que creiem) o, bé podríem crear una altra feature que sigui una total i una altra  més específica
+Control de columnes obertes i semiobertes
+Torre en columna oberta (sí/no)
+Peó avançat protegit (sí/no)
+Torre + dama alineades
+Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
+6. Estructura peons
+Files sense peons
+Nombre d’illetes de peons
+Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
+7. Fase
+Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
+8. Relacions
+Nombre d’amenaces creades
+Nombre de peces penjades (atacada & no defensada)
+Nombre de peces indefenses
+Nombre de peces atacades menys peces defensades
+Torn per jugar (blanc/negre)
+9. Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
+Mobilitat relativa (blanc/negre)
+Peons passats protegits − peons passats enemics
+Control central relatiu
+
+
 # Changelog
+
+##### 2025-11-17 - Ferran Villarta
+- learned about implementations and the model itself
+- searched information (https://www.chessprogramming.org/Evaluation) (https://hxim.github.io/Stockfish-Evaluation-Guide/) (https://chess.stackexchange.com/questions/347/what-is-an-accurate-way-to-evaluate-chess-positions)
+
 
 ##### 2025-11-17 - Natan Sisoev
 
