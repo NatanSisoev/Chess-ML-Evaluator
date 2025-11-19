@@ -12,6 +12,13 @@ To download run (see [official documentation](https://www.kaggle.com/docs/api)):
 kaggle datasets download -d ronakbadhe/chess-evaluations -p data --unzip
 ```
 
+# TODO
+
+- [ ] narrate the full code (flowy from start to end)
+- [ ] count trivial threats by pawns: calculate the value of all pieces threatened by opposite pawns
+- [ ] add more features
+- [ ] remove useless features, find best feature combinations (high `read_size`, low `sample_size`)
+
 # Features
 
 1. Material
@@ -66,10 +73,63 @@ Control central relatiu
 
 # Changelog
 
+##### 2025-11-19 - Natan Sisoev
+
+- created managers: 
+  - `DataManager`:
+    - read a lot of rows
+    - sample a random subset
+    - apply transformers
+    - train and test split (TODO: cross-validation)
+  - `ChessManager`: show board & features
+  - `ModelManager`:
+    - save `y_pred` for metrics
+    - predict a single FEN
+  - `MetricsManager`:
+    - calculate accuracy, recall (white, black and draw), and centipawn accuracy (accuracy with tolerance)
+    - scatter plot `y_pred` vs `y_true`
+    - plot evaluation heatmap on 2 features plane
+    - plot tolerance - accuracy line w/ AUC as title
+- created transformers workflow and transformers:
+  - `PieceInfo`:
+    - white and black piece count
+    - white and black separate types piece count
+    - white and black total piece value
+  - `PawnStructure`:
+    - white and black isolated pawns (count)
+    - white and black doubled pawns (count)
+    - white and black passed pawns (count)
+  - `KingSafety`:
+    - white and black castled (True or False: king and rook in the castled position)
+    - white and black pawns near king (count of pawns in the 9x9 grid around the king)
+    - number of open files on the table
+- full execution `GradientBoostingRegressor`:
+  - 500k rows sampled from 2M
+  - `PieceInfo` + `PawnStructure` + `KingSafety`
+  - results:
+    - MSE: 50950.35639631619
+    - Sign accuracy: 0.62622
+    - White winning recall: 0.923241397897763
+    - Black winning recall: 0.3329284910243498
+    - Draw recall: 0.0
+    - Centipawn ±200 accuracy: 0.77775
+    - AUC TA: 0.85
+- full execution `LinearRegression`:
+  - 500k rows sampled from 2M
+  - `PieceInfo` + `PawnStructure` + `KingSafety`
+  - results:
+    - MSE: 52599.53217916981
+    - Sign accuracy: 0.61593
+    - White winning recall: 0.8443625909621777
+    - Black winning recall: 0.4324900764263286
+    - Draw recall: 0.0
+    - Centipawn ±200 accuracy: 0.76108
+    - AUC TA: 0.85
+
 ##### 2025-11-17 - Ferran Villarta
+
 - learned about implementations and the model itself
 - searched information (https://www.chessprogramming.org/Evaluation) (https://hxim.github.io/Stockfish-Evaluation-Guide/) (https://chess.stackexchange.com/questions/347/what-is-an-accurate-way-to-evaluate-chess-positions)
-
 
 ##### 2025-11-17 - Natan Sisoev
 
