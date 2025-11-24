@@ -52,6 +52,7 @@ Control de columnes obertes i semiobertes
 Torre en columna oberta (sí/no)
 Peó avançat protegit (sí/no)
 Torre + dama alineades
+Torres aliniades
 Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
 6. Estructura peons
 Files sense peons
@@ -72,6 +73,18 @@ Control central relatiu
 
 
 # Changelog
+
+##### 2025-11-24 - Ferran Villarta
+- another way to measure the accuracy may be to represent our data with a N(μ,σ), and then accept the prediction if it is among the limits of [evidence +-z_0,05]
+- 
+TODO
+add the number of movements
+complete the king safety with the remaining features
+pawn structure with non redundant features (explain why we do not put them ~ model based on pieces' interactions)
+remaining features
+start with the structure of a bigger classe which can start with model selection MSE metric 
+discuss about what may be a good tolerance (tolerance determined by the 5% percentile among the normal distribution on the data) on the accuracy
+cross validation and hyperparameters optimization class, automatized
 
 ##### 2025-11-19 - Natan Sisoev
 
@@ -130,6 +143,7 @@ Control central relatiu
 
 - learned about implementations and the model itself
 - searched information (https://www.chessprogramming.org/Evaluation) (https://hxim.github.io/Stockfish-Evaluation-Guide/) (https://chess.stackexchange.com/questions/347/what-is-an-accurate-way-to-evaluate-chess-positions)
+- added potential features to develop
 
 ##### 2025-11-17 - Natan Sisoev
 
