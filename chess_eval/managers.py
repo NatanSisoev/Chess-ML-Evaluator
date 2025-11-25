@@ -82,6 +82,8 @@ class DataManager:
                     self.X = transformer.transform(self.X)
                     self.features.update(transformer.features)
         self.train_test_split()
+        self.df = self.X.copy()
+        self.df[EVAL] = self.y.values
         return self.X
 
     def train_test_split(self, features: list = None, test_size: float = None, random_state: int = None):
@@ -121,8 +123,8 @@ class ModelManager:
     def fit(self):
         self.model.fit(self.dm.X_train, self.dm.y_train)
 
-    def predict(self):
-        self.y_pred = self.model.predict(self.dm.X_test)
+    def predict(self, X: pd.DataFrame = None):
+        self.y_pred = self.model.predict(X or self.dm.X_test)
         return self.y_pred
 
     def predict_fen(self, fen: str):

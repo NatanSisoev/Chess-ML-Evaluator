@@ -1,115 +1,139 @@
-import json
 import os
+import json
 import pickle
 from datetime import datetime
-
-import pandas as pd
+from typing import Tuple
 
 from chess_eval.managers import DataManager, ModelManager
 
 
-class FeatureDatasetStore:
+class StorageManager:
     """
-    Stores feature datasets along with full metadata.
-    Default storage format: Pickle (fast, preserves types)
+    Unified storage manager for:
+    - Feature datasets (full DataManager objects)
+    - Fitted models (full ModelManager objects)
+
+    Default paths:
+        datasets -> "../data/features"
+        models   -> "../models"
     """
 
-    def __init__(self, directory: str):
-        self.directory = directory
-        os.makedirs(self.directory, exist_ok=True)
+    def __init__(self,
+                 dataset_dir: str = r"..\data\features",
+                 model_dir: str = r"..\models"):
+        # Directories
+        self.dataset_dir = dataset_dir
+        self.model_dir = model_dir
+        os.makedirs(self.dataset_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
 
-    def _get_paths(self, name: str, version: str = None):
-        version = version or datetime.now().strftime("%Y%m%d%H%M%S")
-        data_path = os.path.join(self.directory, f"{name}_{version}.pkl")
-        meta_path = os.path.join(self.directory, f"{name}_{version}_meta.json")
-        return data_path, meta_path
+        # Metadata files
+        self.dataset_meta_file = os.path.join(self.dataset_dir, "metadata.json")
+        self.model_meta_file = os.path.join(self.model_dir, "metadata.json")
 
-    def save(self, df: pd.DataFrame, name: str, transformers: list, dm: DataManager = None, version: str = None,
-             notes: str = ""):
-        data_path, meta_path = self._get_paths(name, version)
+        # Initialize metadata files if missing
+        for file in [self.dataset_meta_file, self.model_meta_file]:
+            if not os.path.exists(file):
+                with open(file, "w") as f:
+                    json.dump({}, f)
 
-        # Save dataframe
-        df.to_pickle(data_path)
+    # -------------------- Dataset Methods --------------------
 
-        # Save metadata
-        metadata = {
+    def save_dataset(self, dm: DataManager, name: str = None, notes: str = "") -> str:
+        name = name or datetime.now().strftime("%Y%m%d%H%M%S")
+        file_path = os.path.join(self.dataset_dir, f"{name}.pkl")
+
+        # Pickle the entire DataManager
+        with open(file_path, "wb") as f:
+            pickle.dump(dm, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # Update metadata
+        with open(self.dataset_meta_file, "r") as f:
+            all_metadata = json.load(f)
+
+        all_metadata[name] = {
             "name": name,
-            "version": version or datetime.now().strftime("%Y%m%d%H%M%S"),
-            "shape": df.shape,
-            "columns": df.columns.tolist(),
-            "transformers": [t.name for t in transformers],
+            "path": file_path,
+            "read_size": dm.read_size,
+            "sample_size": dm.sample_size,
+            "test_size": dm.test_size,
+            "features": list(dm.features),
+            "transformers": [t.name for t in dm.transformers] if dm.transformers else [],
+            "random_state": dm.random_state,
+            "df_shape": dm.df.shape if dm.df is not None else None,
+            "columns": dm.df.columns.tolist() if dm.df is not None else None,
             "created_at": datetime.now().isoformat(),
             "notes": notes,
         }
-        if dm:
-            metadata.update({
-                "read_size": dm.read_size,
-                "sample_size": dm.sample_size,
-                "test_size": dm.test_size,
-                "features": list(dm.features),
-            })
 
-        with open(meta_path, "w") as f:
-            json.dump(metadata, f, indent=2)
+        with open(self.dataset_meta_file, "w") as f:
+            json.dump(all_metadata, f, indent=2)
 
-        return data_path, meta_path
+        return file_path
 
-    def load(self, data_path: str, meta_path: str = None):
-        df = pd.read_pickle(data_path)
-        metadata = None
-        if meta_path and os.path.exists(meta_path):
-            with open(meta_path, "r") as f:
-                metadata = json.load(f)
-        return df, metadata
+    def load_dataset(self, name: str) -> Tuple[DataManager, dict]:
+        with open(self.dataset_meta_file, "r") as f:
+            all_metadata = json.load(f)
 
+        if name not in all_metadata:
+            raise KeyError(f"No dataset found for '{name}'")
 
-class FittedModelStore:
-    """
-    Stores fitted models with metadata.
-    Storage format: Pickle
-    """
+        meta = all_metadata[name]
+        with open(meta["path"], "rb") as f:
+            dm = pickle.load(f)
 
-    def __init__(self, directory: str):
-        self.directory = directory
-        os.makedirs(self.directory, exist_ok=True)
+        return dm, meta
 
-    def _get_paths(self, name: str, version: str = None):
-        version = version or datetime.now().strftime("%Y%m%d%H%M%S")
-        model_path = os.path.join(self.directory, f"{name}_{version}.pkl")
-        meta_path = os.path.join(self.directory, f"{name}_{version}_meta.json")
-        return model_path, meta_path
+    def list_datasets(self) -> list[str]:
+        with open(self.dataset_meta_file, "r") as f:
+            all_metadata = json.load(f)
+        return list(all_metadata.keys())
 
-    def save(self, mm: ModelManager, name: str, version: str = None, notes: str = ""):
-        model_path, meta_path = self._get_paths(name, version)
+    # -------------------- Model Methods --------------------
 
-        # Save the model object
-        with open(model_path, "wb") as f:
-            pickle.dump(mm.model, f)
+    def save_model(self, mm: ModelManager, name: str = None, notes: str = "") -> str:
+        name = name or datetime.now().strftime("%Y%m%d%H%M%S")
+        file_path = os.path.join(self.model_dir, f"{name}.pkl")
 
-        # Save metadata
-        metadata = {
+        # Pickle the entire ModelManager
+        with open(file_path, "wb") as f:
+            pickle.dump(mm, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+        # Update metadata
+        with open(self.model_meta_file, "r") as f:
+            all_metadata = json.load(f)
+
+        all_metadata[name] = {
             "name": name,
-            "version": version or datetime.now().strftime("%Y%m%d%H%M%S"),
+            "path": file_path,
             "model_class": mm.model.__class__.__name__,
             "parameters": getattr(mm.model, "get_params", lambda: {})(),
-            "training_dataset": getattr(mm.dm, "filepath", None),
+            "training_dataset": getattr(mm.dm, "filepath", None) if mm.dm else None,
             "features": list(mm.dm.features) if mm.dm else [],
             "transformers": [t.name for t in mm.dm.transformers] if mm.dm and mm.dm.transformers else [],
             "created_at": datetime.now().isoformat(),
             "notes": notes,
         }
-        with open(meta_path, "w") as f:
-            json.dump(metadata, f, indent=2)
 
-        return model_path, meta_path
+        with open(self.model_meta_file, "w") as f:
+            json.dump(all_metadata, f, indent=2)
 
-    def load(self, model_path: str, meta_path: str = None):
-        with open(model_path, "rb") as f:
-            model = pickle.load(f)
+        return file_path
 
-        metadata = None
-        if meta_path and os.path.exists(meta_path):
-            with open(meta_path, "r") as f:
-                metadata = json.load(f)
+    def load_model(self, name: str) -> Tuple[ModelManager, dict]:
+        with open(self.model_meta_file, "r") as f:
+            all_metadata = json.load(f)
 
-        return model, metadata
+        if name not in all_metadata:
+            raise KeyError(f"No model found for '{name}'")
+
+        meta = all_metadata[name]
+        with open(meta["path"], "rb") as f:
+            mm = pickle.load(f)
+
+        return mm, meta
+
+    def list_models(self) -> list[str]:
+        with open(self.model_meta_file, "r") as f:
+            all_metadata = json.load(f)
+        return list(all_metadata.keys())

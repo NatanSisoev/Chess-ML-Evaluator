@@ -1,6 +1,6 @@
 import chess
 
-DATASET_FILE = "../data/chessData.csv"
+DATASET_FILE = "../data/raw/chessData.csv"
 DATASET_SIZE = 10_000
 FEN = "FEN"
 EVAL = "Evaluation"

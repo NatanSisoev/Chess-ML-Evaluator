@@ -71,6 +71,19 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data --unzip
 
 # Changelog
 
+##### 2025-11-25 - Natan Sisoev
+
+- started `refactor` branch
+- refactored the gigantic main.ipynb into:
+  - managers
+  - constants (uppercase values)
+  - features (all class feature transformers)
+  - storage (way to store computed features and fitted models)
+  - `mwe.ipynb`: minimal working example of a Gradient Boosting model
+- re-organized the structure of the project into the python package `chess_eval` and separate data, models and notebooks folders
+- migrated to using `uv` for package managing and project metadata logging
+- created `Mobility`, `Attackers`, `PositionalControl` and `GameInfo` feature transformers
+
 ##### 2025-11-24 - Ferran Villarta
 - another way to measure the accuracy may be to represent our data with a N(μ,σ), and then accept the prediction if it is among the limits of [evidence +-z_0,05]
 - 
@@ -82,6 +95,13 @@ remaining features
 start with the structure of a bigger classe which can start with model selection MSE metric 
 discuss about what may be a good tolerance (tolerance determined by the 5% percentile among the normal distribution on the data) on the accuracy
 cross validation and hyperparameters optimization class, automatized
+
+##### 2025-11-24 - Natan Sisoev
+
+- finished king safety features
+- explored R^2 and R^2 adjusted metrics
+- improved managers' communications
+- tried different read/sample sizes to see the effect
 
 ##### 2025-11-19 - Natan Sisoev
 
