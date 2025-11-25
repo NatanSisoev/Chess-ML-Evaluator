@@ -29,20 +29,11 @@ Nombre de torres blanc/negre
 Nombre de dames blanc/negre
 Material total blanc
 Material total negre
-Diferència de material (blanc − negre)
-Peons passats
-Peons doblats
-Peons aïllats
-Peons endarrerits
-Peons candidats a promoció
-2. Mobilitat
-Mobilitat total de les peces blanques
-Mobilitat total de les peces negres
+2. Mobilitat (per cada peça)
 Mobilitat per peça (cavalls, alfils, torres, dames)
 3. Seguretat del rei
 Distància del rei a la línia de fons
 Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
-Torres connectades defensant el rei
 Enroc fet (sí/no)
 Enroc disponible (sí/no)
 Nombre de peces enemigues atacant caselles al voltant del rei
@@ -54,19 +45,24 @@ Peó avançat protegit (sí/no)
 Torre + dama alineades
 Torres aliniades
 Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
-6. Estructura peons
+5. Estructura peons
 Files sense peons
 Nombre d’illetes de peons
 Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
-7. Fase
+Peons passats
+Peons doblats
+Peons aïllats
+Peons endarrerits
+Peons candidats a promoció
+6. Fase
 Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
-8. Relacions
+7. Relacions (totals, amb punts)
 Nombre d’amenaces creades
 Nombre de peces penjades (atacada & no defensada)
 Nombre de peces indefenses
 Nombre de peces atacades menys peces defensades
 Torn per jugar (blanc/negre)
-9. Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
+8. Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
 Mobilitat relativa (blanc/negre)
 Peons passats protegits − peons passats enemics
 Control central relatiu
@@ -75,6 +71,10 @@ Control central relatiu
 # Changelog
 
 ##### 2025-11-24 - Ferran Villarta
+- mobility, board control, miscellaneous
+- first data exploration
+
+
 - another way to measure the accuracy may be to represent our data with a N(μ,σ), and then accept the prediction if it is among the limits of [evidence +-z_0,05]
 - 
 TODO
