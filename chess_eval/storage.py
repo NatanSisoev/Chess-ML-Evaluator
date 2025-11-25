@@ -18,6 +18,8 @@ class StorageManager:
         models   -> "../models"
     """
 
+    # TODO: store df and model, not the managers!!!
+
     def __init__(self,
                  dataset_dir: str = r"..\data\features",
                  model_dir: str = r"..\models"):

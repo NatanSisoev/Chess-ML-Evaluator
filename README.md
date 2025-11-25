@@ -1,15 +1,73 @@
 # Chess Evaluations
 
-ML based chess positions evaluator.
+A machine-learning-based chess position evaluator. This project extracts features from chess positions in FEN format and trains models to predict position evaluations.
 
-# Dataset
+## Folder Structure
 
-Dataset: https://www.kaggle.com/datasets/ronakbadhe/chess-evaluations
+```
+Chess Evaluations/
+├─ chess_eval/            # Python package with all core code
+│  ├─ __init__.py
+│  ├─ constants.py        # constants like piece values
+│  ├─ features.py         # feature transformers
+│  ├─ managers.py         # data, model, metrics managers
+│  └─ storage.py          # feature and model storage
+├─ data/                  # datasets
+│  └─ features/           # pickled feature datasets with metadata.json
+├─ models/                # fitted models with metadata.json
+├─ notebooks/             # Jupyter notebooks
+│  ├─ main.ipynb          # legacy notebook
+│  ├─ short.ipynb         # minimal working example
+│  └─ storage.ipynb       # examples of storing features and models
+├─ requirements.txt       # legacy pip requirements
+└─ README.md
+```
 
-To download run (see [official documentation](https://www.kaggle.com/docs/api)):
+## Getting Started
+
+This project uses [uv](https://uv.rst.sh/) for dependency and project management.
+
+1. Install `uv` globally if not already installed:
 
 ```bash
-kaggle datasets download -d ronakbadhe/chess-evaluations -p data --unzip
+pip install uv
+```
+
+2. Install the project and its dependencies (from `uv.lock`):
+
+```bash
+uv install
+```
+
+This will create a `.venv` (if not existing) and install all locked dependencies.
+
+3. Activate the virtual environment managed by uv:
+
+```bash
+uv shell
+```
+
+4. Run scripts or notebooks using the environment:
+
+```bash
+uv run python notebooks/short.ipynb
+```
+
+5. Add a new dependency:
+
+```bash
+uv pip install <package_name>
+uv lock  # update uv.lock
+```
+
+## Dataset
+
+Original Dataset: https://www.kaggle.com/datasets/ronakbadhe/chess-evaluations
+
+Download and unzip (see [official documentation](https://www.kaggle.com/docs/api)):
+
+```bash
+kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 ```
 
 # TODO
@@ -83,6 +141,8 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data --unzip
 - re-organized the structure of the project into the python package `chess_eval` and separate data, models and notebooks folders
 - migrated to using `uv` for package managing and project metadata logging
 - created `Mobility`, `Attackers`, `PositionalControl` and `GameInfo` feature transformers
+- added `storage.ipynb` notebook showing usage of the `StorageManager` class
+- improved README: added folder structure and getting started
 
 ##### 2025-11-24 - Ferran Villarta
 - another way to measure the accuracy may be to represent our data with a N(μ,σ), and then accept the prediction if it is among the limits of [evidence +-z_0,05]
