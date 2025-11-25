@@ -21,56 +21,53 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data --unzip
 
 # Features
 
-1. Material
-Nombre de peons blanc/negre
-Nombre de cavalls blanc/negre
-Nombre d’alfils blanc/negre
-Nombre de torres blanc/negre
-Nombre de dames blanc/negre
-Material total blanc
-Material total negre
-Diferència de material (blanc − negre)
-Peons passats
-Peons doblats
-Peons aïllats
-Peons endarrerits
-Peons candidats a promoció
-2. Mobilitat
-Mobilitat total de les peces blanques
-Mobilitat total de les peces negres
-Mobilitat per peça (cavalls, alfils, torres, dames)
-3. Seguretat del rei
-Distància del rei a la línia de fons
-Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
-Torres connectades defensant el rei
-Enroc fet (sí/no)
-Enroc disponible (sí/no)
-Nombre de peces enemigues atacant caselles al voltant del rei
-4. Control del tauler
-Nombre de caselles centrals controlades (d4, d5, e4, e5) (també podríem valorar com si fos una convolució, tot el taulell, així tenim en compte totes les caselles, i hi assignem el valor en funció del que creiem) o, bé podríem crear una altra feature que sigui una total i una altra  més específica
-Control de columnes obertes i semiobertes
-Torre en columna oberta (sí/no)
-Peó avançat protegit (sí/no)
-Torre + dama alineades
-Torres aliniades
-Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
-6. Estructura peons
-Files sense peons
-Nombre d’illetes de peons
-Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
-7. Fase
-Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
-8. Relacions
-Nombre d’amenaces creades
-Nombre de peces penjades (atacada & no defensada)
-Nombre de peces indefenses
-Nombre de peces atacades menys peces defensades
-Torn per jugar (blanc/negre)
-9. Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
-Mobilitat relativa (blanc/negre)
-Peons passats protegits − peons passats enemics
-Control central relatiu
-
+- [x] Material
+   - [x] Nombre de peons blanc/negre
+   - [x] Nombre de cavalls blanc/negre
+   - [x] Nombre d’alfils blanc/negre
+   - [x] Nombre de torres blanc/negre
+   - [x] Nombre de dames blanc/negre
+   - [x] Material total blanc
+   - [x] Material total negre
+- [ ] Mobilitat
+  - [ ] Mobilitat total de les peces blanques
+  - [ ] Mobilitat total de les peces negres
+  - [ ] Mobilitat per peça (cavalls, alfils, torres, dames)
+- [ ] Seguretat del rei
+  - [x] Distància del rei a la línia de fons
+  - [x] Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
+  - [x] Enroc fet (sí/no)
+  - [x] Enroc disponible (sí/no)
+  - [x] Nombre de peces enemigues atacant caselles al voltant del rei
+- [ ] Control del tauler
+  - [ ] Nombre de caselles centrals controlades (d4, d5, e4, e5) (també podríem valorar com si fos una convolució, tot el taulell, així tenim en compte totes les caselles, i hi assignem el valor en funció del que creiem) o, bé podríem crear una altra feature que sigui una total i una altra  més específica
+  - [ ] Control de columnes obertes i semiobertes
+  - [ ] Torre en columna oberta (sí/no)
+  - [ ] Peó avançat protegit (sí/no)
+  - [ ] Torre + dama alineades
+  - [ ] Torres aliniades
+  - [ ] Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
+- [ ] Estructura peons
+  - [ ] Files sense peons
+  - [ ] Nombre d’illetes de peons
+  - [ ] Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
+  - [ ] Peons passats
+  - [ ] Peons doblats
+  - [ ] Peons aïllats
+  - [ ] Peons endarrerits
+  - [ ] Peons candidats a promoció
+- [ ] Fase
+  - [ ] Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
+- [ ] Relacions
+  - [ ] Nombre d’amenaces creades
+  - [ ] Nombre de peces penjades (atacada & no defensada)
+  - [ ] Nombre de peces indefenses
+  - [ ] Nombre de peces atacades menys peces defensades
+  - [ ] Torn per jugar (blanc/negre)
+- [ ] Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
+  - [ ] Mobilitat relativa (blanc/negre)
+  - [ ] Peons passats protegits − peons passats enemics
+  - [ ] Control central relatiu
 
 # Changelog
 

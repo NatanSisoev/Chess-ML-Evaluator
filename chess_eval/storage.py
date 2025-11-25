@@ -5,7 +5,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from managers import DataManager, ModelManager
+from chess_eval.managers import DataManager, ModelManager
 
 
 class FeatureDatasetStore:
