@@ -1,7 +1,8 @@
+import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from IPython.core.display_functions import display
-from matplotlib import pyplot as plt
 from scipy.stats import spearmanr
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
@@ -10,7 +11,9 @@ from tqdm import tqdm
 from chess_eval.constants import *
 
 
-def clean(df: pd.DataFrame, mode: str = "remove", threshold: int = 1000) -> pd.DataFrame:
+def clean(
+        df: pd.DataFrame, mode: str = "remove", threshold: int = EVAL_THRESHOLD
+) -> pd.DataFrame:
     df = df[~df[EVAL].astype(str).str.contains("#")]
     df.loc[:, EVAL] = pd.to_numeric(df[EVAL], errors="coerce").astype(int)
     if mode == "clip":
@@ -24,100 +27,121 @@ def clean(df: pd.DataFrame, mode: str = "remove", threshold: int = 1000) -> pd.D
 
 class DataManager:
     """
-    The most important function from this class is apply_transformers,
-    which develops the application of each transformer in our dataset,
-    and updating only the features set (each transformer has to be defined
-    before applying it). As we are just interested in the features,
-    there is no need to accumulate the transformers, so we replace
-    the last transformers for the new ones in every iteration.
-    We make sure we only apply the transformer if its features
-    are not already in the dataset.
+    Handles loading, cleaning, sampling, feature transformation, and train-test splitting
+    for a chess evaluation dataset.
+
+    Transformers are applied on-demand; only missing features are computed.
     """
 
-    def __init__(self, filepath: str = DATASET_FILE, read_size: int = None, sample_size: int = 100_000,
-                 test_size: float = 0.2,
-                 random_state: int = 99, features: list = None, cleaner=clean,
-                 transformers: list = None):
+    def __init__(
+            self,
+            filepath: str = DATASET_FILE,
+            read_size: int = READ_SIZE,
+            sample_size: int = SAMPLE_SIZE,
+            test_size: float = TEST_SIZE,
+            random_state: int = RANDOM_STATE,
+            cleaner=clean,
+            transformers: list = None,
+    ):
         self.filepath = filepath
         self.read_size = read_size
         self.sample_size = sample_size
         self.test_size = test_size
         self.random_state = random_state
-        self.features = features or set()
         self.cleaner = cleaner
-        self.transformers = transformers or []  # each element is a class with a 'transform' method and; a 'name','features' and 'methods' attributes corresponding to the transformer identification.
+        self.transformers = transformers or []
 
-        self.df_all = pd.read_csv(filepath, nrows=read_size)
-        self.df_raw = self.df_all
-        self.df = None
+        # Load and clean dataset
+        self.df_all = self.cleaner(pd.read_csv(filepath, nrows=read_size))
 
-        self.X = None
-        self.y = None
+        # Sampled indices and train/test indices
+        self.sample_idx = None
+        self.train_idx = None
+        self.test_idx = None
 
-        self.X_train = None
-        self.X_test = None
-        self.y_train = None
-        self.y_test = None
-
-        self.df_all = self.cleaner(self.df_all)
+        # Sample and optionally apply transformers
         self.sample()
-
-        if len(self.transformers) > 0:
+        if self.transformers:
             self.apply_transformers()
             self.train_test_split()
 
-    def sample(self, sample_size: int = None):
-        """Sample random rows."""
-        if sample_size is not None:
+    @property
+    def df(self):
+        """Return the sampled dataframe (subset of df_all)."""
+        return self.df_all.loc[self.sample_idx].reset_index(drop=True)
+
+    @property
+    def X(self):
+        return self.df.drop(columns=[EVAL, FEN])
+
+    @property
+    def y(self):
+        return self.df[EVAL]
+
+    @property
+    def X_train(self):
+        return self.X.iloc[self.train_idx]
+
+    @property
+    def X_test(self):
+        return self.X.iloc[self.test_idx]
+
+    @property
+    def y_train(self):
+        return self.y.iloc[self.train_idx]
+
+    @property
+    def y_test(self):
+        return self.y.iloc[self.test_idx]
+
+    def sample(self, sample_size: int = None) -> pd.DataFrame:
+        """
+        Sample `sample_size` random rows from the cleaned dataset.
+        Updates X (features) and y (target) accordingly.
+        """
+        if sample_size:
             self.sample_size = sample_size
-        self.df = self.df_all.sample(n=self.sample_size, random_state=self.random_state).reset_index(drop=True)
-        self.X = self.df[[FEN]]
-        self.y = self.df[EVAL]
+        self.sample_idx = self.df_all.sample(
+            n=self.sample_size, random_state=self.random_state
+        ).index.to_numpy()
         return self.df
 
-    def apply_transformers(self, transformers: list = None):
-        """Apply transformers to dataframe."""
-        if transformers is not None:
-            self.transformers = transformers
-        elif self.transformers is None:
-            return self.X
-        with tqdm(self.transformers, desc="Applying transformations", leave=False) as pbar:
+    def apply_transformers(self, transformers=None) -> pd.DataFrame:
+        """
+        Apply a list of feature transformers to the dataset.
+        Only applies features that are not already present.
+        Updates X and train-test splits.
+        """
+        if transformers is None:
+            transformers = []
+        self.transformers.extend(transformers)
+
+        with tqdm(
+                self.transformers, desc="Applying transformations", leave=False
+        ) as pbar:
             for transformer in pbar:
-                if not transformer.features.issubset(self.features):
+                if transformer.features - set(self.X.columns):
                     pbar.set_postfix({"transformer": transformer.name})
-                    self.X = transformer.transform(self.X)
-                    self.features.update(transformer.features)
-        self.train_test_split()
-        self.df = self.X.copy()
-        self.df[EVAL] = self.y.values
+                    df_transformed = transformer.transform(self.df)
+                    self.df_all.loc[self.sample_idx, df_transformed.columns] = (
+                        df_transformed.values
+                    )
+
         return self.X
 
-    def train_test_split(self, features: list = None, test_size: float = None, random_state: int = None):
-        """First sample then split."""
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            self.X[list(features or self.features)],
-            self.y,
-            test_size=test_size or self.test_size,
-            random_state=random_state or self.random_state
+    def train_test_split(
+            self, features: list = None, test_size: float = None, random_state: int = None
+    ):
+        """
+        Split the dataset into train and test sets.
+        Defaults to class attributes if parameters are not provided.
+        """
+        self.train_idx, self.test_idx = train_test_split(
+            np.arange(self.sample_size),
+            test_size=self.test_size,
+            random_state=self.random_state,
         )
-
         return self.X_train, self.X_test, self.y_train, self.y_test
-
-
-class ChessManager:
-    def __init__(self, dm: DataManager):
-        self.dm = dm
-
-    def show_board(self, idx: int):
-        fen = self.dm.df.loc[idx, FEN]
-        display(chess.Board(fen))
-
-    def show_features(self, idx: int):
-        display(self.dm.df.loc[idx])
-
-    def show(self, idx: int):
-        self.show_features(idx)
-        self.show_board(idx)
 
 
 class ModelManager:
@@ -135,23 +159,36 @@ class ModelManager:
 
     def predict_fen(self, fen: str):
         df_fen = pd.DataFrame({FEN: [fen]})
-        if self.dm.transformers:
-            for transformer in self.dm.transformers:
-                df_fen = transformer.transform(df_fen)
 
-        # Prepare X_new with the same columns as X_train
-        X_new = df_fen.drop(FEN, axis=1)
-        for col in self.dm.X_train.columns:
-            if col not in X_new.columns:
-                X_new[col] = 0  # Add the missing column with default value 0
-        X_new = X_new[self.dm.X_train.columns]  # rearrange columns to match
+        for transformer in getattr(self.dm, "transformers", []):
+            df_fen = transformer.transform(df_fen)
+
+        X_new = df_fen.drop(FEN, axis=1, errors="ignore")
+        missing_cols = set(self.dm.X_train.columns) - set(X_new.columns)
+        for col in missing_cols:
+            X_new[col] = 0
+
+        X_new = X_new[self.dm.X_train.columns]
 
         return self.model.predict(X_new)
 
 
 class MetricsManager:
-    def __init__(self, mm: ModelManager):
+    def __init__(self, mm, plots_dir=PLOTS_DIR):
         self.mm = mm
+
+        self.plots_dir = plots_dir
+        self.plots_dir.mkdir(exist_ok=True)
+
+        plt.style.use("ggplot")
+        plt.rcParams["text.usetex"] = True
+        plt.rcParams["text.color"] = "black"
+        plt.rcParams["font.weight"] = "bold"
+        plt.rcParams["axes.labelcolor"] = "black"
+        plt.rcParams["xtick.color"] = "black"
+        plt.rcParams["ytick.color"] = "black"
+
+    # EVALUATIONS
 
     @property
     def y_true(self):
@@ -161,12 +198,12 @@ class MetricsManager:
     def y_pred(self):
         return self.mm.y_pred
 
-    def sign_accuracy(self):
-        true_sign = np.sign(self.y_true)
-        pred_sign = np.sign(self.y_pred)
-        return np.mean(true_sign == pred_sign)
+    # METRICS
 
-    def sign_recall(self, player: str = "white"):
+    def sign_accuracy(self):
+        return np.mean(np.sign(self.y_true) == np.sign(self.y_pred))
+
+    def sign_recall(self, player="white"):
         true_sign = np.sign(self.y_true)
         pred_sign = np.sign(self.y_pred)
 
@@ -177,12 +214,12 @@ class MetricsManager:
         elif player == "draw":
             mask = true_sign == 0
         else:
-            raise ValueError("player must be 'white' or 'black'")
+            raise ValueError("player must be white/black/draw")
 
         if mask.sum() == 0:
             return np.nan
 
-        return np.sum(pred_sign[mask] == true_sign[mask]) / np.sum(mask)
+        return np.mean(pred_sign[mask] == true_sign[mask])
 
     def centipawn_accuracy(self, tol=200):
         return np.mean(np.abs(self.y_true - self.y_pred) <= tol)
@@ -193,62 +230,51 @@ class MetricsManager:
     def r2_adjusted(self):
         n = len(self.y_true)
         p = self.mm.dm.X_test.shape[1]
-        r2 = r2_score(self.y_true, self.y_pred)
+        r2 = self.r2()
         return 1 - (1 - r2) * (n - 1) / (n - p - 1)
 
     def spearman_rank_correlation(self):
         return spearmanr(self.y_true, self.y_pred)[0]
 
-    def report(self, tol=200):
-        print("MSE:", mean_squared_error(self.y_true, self.y_pred))
-        print("Sign accuracy:", self.sign_accuracy())
-        print("White winning recall:", self.sign_recall("white"))
-        print("Black winning recall:", self.sign_recall("black"))
-        print("Draw recall:", self.sign_recall("draw"))
-        print(f"Centipawn ±{tol} accuracy:", self.centipawn_accuracy(tol))
-        print("R2:", self.r2())
-        print("R2 adjusted:", self.r2_adjusted())
-        print("Spearman rank correlation:", self.spearman_rank_correlation())
+    def compute_metrics(self, tol=200):
+        return {
+            "mse": mean_squared_error(self.y_true, self.y_pred),
+            "sign_accuracy": self.sign_accuracy(),
+            "white_recall": self.sign_recall("white"),
+            "black_recall": self.sign_recall("black"),
+            "draw_recall": self.sign_recall("draw"),
+            f"acc_{tol}_tol": self.centipawn_accuracy(tol),
+            "r2": self.r2(),
+            "r2_adjusted": self.r2_adjusted(),
+            "spearman": self.spearman_rank_correlation(),
+        }
 
-    def plot_scatter(self):
-        plt.figure(figsize=(10, 8))
+    # PLOTS
+
+    def plot_scatter(self, save=False):
         plt.scatter(self.y_true, self.y_pred, alpha=0.5)
-        plt.xlim(-1000, 1000)
-        plt.ylim(-1000, 1000)
-        plt.xlabel("True Eval")
-        plt.ylabel("Predicted Eval")
-        plt.show()
+        plt.xlim(-EVAL_THRESHOLD, EVAL_THRESHOLD)
+        plt.ylim(-EVAL_THRESHOLD, EVAL_THRESHOLD)
+        plt.xlabel("True")
+        plt.ylabel("Predicted")
+        plt.title("True vs Predicted Evaluation")
 
-    def plot_eval(self, f1, f2):
-        w_vals = np.linspace(self.mm.dm.df[f1].min(), self.mm.dm.df[f1].max(), 100)
-        b_vals = np.linspace(self.mm.dm.df[f2].min(), self.mm.dm.df[f2].max(), 100)
-        W, B = np.meshgrid(w_vals, b_vals)
+        if save:
+            fname = f"scatter_{time.strftime("%Y%m%d_%H%M%S")}.png"
+            fpath = self.plots_dir / fname
+            plt.savefig(fpath, dpi=FIG_DPI)
 
-        grid_df = pd.DataFrame({f1: W.ravel(), f2: B.ravel()})
-        Z = self.mm.model.predict(grid_df).reshape(W.shape)
-
-        plt.figure(figsize=(8, 10))
-        contour = plt.contourf(W, B, Z, levels=50, cmap="viridis")
-        plt.colorbar(contour, label="Predicted Evaluation (centipawns)")
-
-        zero_line = plt.contour(W, B, Z, levels=[0], colors="white")
-        plt.clabel(zero_line, fmt="0", fontsize=10)
-
-        plt.xlabel(f1)
-        plt.ylabel(f2)
-        plt.title("Predicted Evaluation")
-
-        plt.show()
-
-    def plot_tol_acc(self, max_tol=1000):
-        tols = np.linspace(0, max_tol, 1000)
+    def plot_tol_acc(self, max_tol=EVAL_THRESHOLD, save=False):
+        tols = np.linspace(0, max_tol, max_tol)
         accs = [self.centipawn_accuracy(tol) for tol in tols]
-
         auc = np.trapezoid(accs, tols) / max_tol
 
-        plt.figure(figsize=(10, 8))
         plt.plot(tols, accs)
-        plt.title(f"Tolerance-Accuracy Curve (AUC = {auc:.2f})")
-        plt.xlabel("Centipawn Tolerance")
+        plt.title(f"Tolerance-Accuracy Curve (AUC={auc:.3f})")
+        plt.xlabel("Tolerance")
         plt.ylabel("Accuracy")
-        plt.show()
+
+        if save:
+            fname = f"tol_acc_{time.strftime("%Y%m%d_%H%M%S")}.png"
+            fpath = self.plots_dir / fname
+            plt.savefig(fpath, dpi=FIG_DPI)
