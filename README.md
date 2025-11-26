@@ -54,14 +54,14 @@ Peons doblats
 Peons aïllats
 Peons endarrerits
 Peons candidats a promoció
-6. Fase
+6. Miscellaneous
 Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
+Halfmove clock
+Player to move
 7. Relacions (totals, amb punts)
 Nombre d’amenaces creades
 Nombre de peces penjades (atacada & no defensada)
 Nombre de peces indefenses
-Nombre de peces atacades menys peces defensades
-Torn per jugar (blanc/negre)
 8. Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
 Mobilitat relativa (blanc/negre)
 Peons passats protegits − peons passats enemics
@@ -69,22 +69,61 @@ Control central relatiu
 
 
 # Changelog
-
 ##### 2025-11-24 - Ferran Villarta
-- mobility, board control, miscellaneous
-- first data exploration
+- created `Relations` transformer:
+  - `Relations`:
+    - Threats_Created_White
+    - Threats_Created_Black
+    - Hanging_Pieces_White
+    - Hanging_Pieces_Black
+    - Hanging_Points_White
+    - Hanging_Points_Black
+    - Undefended_Pieces_White
+    - Undefended_Pieces_Black
+    - Undefended_Points_White
+    - Undefended_Points_Black
+    
+##### 2025-11-24 - Ferran Villarta
+- Another way to measure accuracy is to model our data as a normal distribution `N(μ, σ)`, and then accept the prediction if it falls within the range `[evidence ± z_0.05]`.
 
+- created transformers:
+  - `BoardControl`:
+    - Central_Squares_Control_White
+    - Central_Squares_Control_Black
+    - Open_Columns_White
+    - Open_Columns_Black
+    - SemiOpen_Columns_White
+    - SemiOpen_Columns_Black
+    - Rook_on_Open_Column_White
+    - Rook_on_Open_Column_Black
+    - Protected_Advanced_Pawn_White
+    - Protected_Advanced_Pawn_Black
+    - Rook_Queen_Aligned_White
+    - Rook_Queen_Aligned_Black
+    - Rooks_Aligned_White
+    - Rooks_Aligned_Black
+    - Controlled_Squares_White
+    - Controlled_Squares_Black
 
-- another way to measure the accuracy may be to represent our data with a N(μ,σ), and then accept the prediction if it is among the limits of [evidence +-z_0,05]
-- 
-TODO
-add the number of movements
-complete the king safety with the remaining features
-pawn structure with non redundant features (explain why we do not put them ~ model based on pieces' interactions)
-remaining features
-start with the structure of a bigger classe which can start with model selection MSE metric 
-discuss about what may be a good tolerance (tolerance determined by the 5% percentile among the normal distribution on the data) on the accuracy
-cross validation and hyperparameters optimization class, automatized
+  - `PieceMobility`:
+    - Mobility_King_White
+    - Mobility_Queen_White
+    - Mobility_Rook_White
+    - Mobility_Bishop_White
+    - Mobility_Knight_White
+    - Mobility_Pawn_White
+    - Mobility_King_Black
+    - Mobility_Queen_Black
+    - Mobility_Rook_Black
+    - Mobility_Bishop_Black
+    - Mobility_Knight_Black
+    - Mobility_Pawn_Black
+
+  - `MiscFeatures`:
+    - Player_to_Move
+    - Number_of_Moves
+    - Halfmove_Clock
+- commented the code
 
 ##### 2025-11-19 - Natan Sisoev
 
