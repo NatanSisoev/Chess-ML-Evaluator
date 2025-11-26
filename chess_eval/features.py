@@ -5,6 +5,9 @@ import pandas as pd
 from chess_eval.constants import *
 
 
+###################### Feature Bundle ######################
+
+
 class FeatureBundle(abc.ABC):
     name: str
     features: set
@@ -18,11 +21,12 @@ class FeatureBundle(abc.ABC):
     def transform(cls, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
         df.drop(columns=cls.features, inplace=True, errors="ignore")
-        results = [cls.compute(chess.Board(fen)) for fen in df["FEN"].values]
+        results = [cls.compute(chess.Board(fen)) for fen in df[FEN].values]
         return pd.concat([df, pd.DataFrame(results, index=df.index)], axis=1)
 
 
-# -------------------- Piece Info --------------------
+######################## Piece Info ########################
+
 
 class PieceInfo(FeatureBundle):
     name = "Piece Information"
@@ -80,7 +84,8 @@ class PieceInfo(FeatureBundle):
         return out
 
 
-# -------------------- Pawn Structure --------------------
+###################### Pawn Structure ######################
+
 
 class PawnStructure(FeatureBundle):
     name = "Pawn Structure"
@@ -155,7 +160,8 @@ class PawnStructure(FeatureBundle):
         }
 
 
-# -------------------- King Safety --------------------
+####################### King Safety ########################
+
 
 class KingSafety(FeatureBundle):
     name = "King Safety"
@@ -266,76 +272,234 @@ class KingSafety(FeatureBundle):
         }
 
 
-# -------------------- Mobility --------------------
+######################### Mobility #########################
+
 
 class Mobility(FeatureBundle):
-    name = "Mobility"
-    features = {"Mobility_White", "Mobility_Black", "Mobility_To_Move"}
+    name = "Piece Mobility"
+    features = {
+        "Mobility_King_White", "Mobility_Queen_White", "Mobility_Rook_White",
+        "Mobility_Bishop_White", "Mobility_Knight_White", "Mobility_Pawn_White",
+        "Mobility_King_Black", "Mobility_Queen_Black", "Mobility_Rook_Black",
+        "Mobility_Bishop_Black", "Mobility_Knight_Black", "Mobility_Pawn_Black"
+    }
 
     @staticmethod
-    def mobility_side(board, color):
-        b = board.copy()
-        b.turn = color
-        return len(list(b.legal_moves))
+    def compute(board):
+        # Pre-index legal moves by origin square (8x8 → fast lookup)
+        move_map = {sq: 0 for sq in chess.SQUARES}
+        for mv in board.legal_moves:
+            move_map[mv.from_square] += 1
 
-    @classmethod
-    def compute(cls, board):
-        return {
-            "Mobility_White": cls.mobility_side(board, chess.WHITE),
-            "Mobility_Black": cls.mobility_side(board, chess.BLACK),
-            "Mobility_To_Move": len(list(board.legal_moves))
-        }
+        out = {}
+        pieces = [
+            (chess.KING, "King"),
+            (chess.QUEEN, "Queen"),
+            (chess.ROOK, "Rook"),
+            (chess.BISHOP, "Bishop"),
+            (chess.KNIGHT, "Knight"),
+            (chess.PAWN, "Pawn")
+        ]
 
+        for color, cname in [(chess.WHITE, "White"), (chess.BLACK, "Black")]:
+            for ptype, pname in pieces:
+                count = 0
+                for sq in board.pieces(ptype, color):
+                    count += move_map[sq]
+                out[f"Mobility_{pname}_{cname}"] = count
 
-# -------------------- Attackers --------------------
-
-class Attackers(FeatureBundle):
-    name = "Attackers"
-    features = {"White_King_Attackers", "Black_King_Attackers", "White_King_Zone_Attackers",
-                "Black_King_Zone_Attackers"}
-
-    @staticmethod
-    def king_attackers(board, color):
-        k = board.king(color)
-        if k is None: return 0
-        return len(board.attackers(not color, k))
-
-    @staticmethod
-    def king_zone_attackers(board, color):
-        k = board.king(color)
-        if k is None: return 0
-        zone = [k] + [sq for sq in chess.SQUARES if chess.square_distance(sq, k) == 1]
-        return sum(len(board.attackers(not color, sq)) for sq in zone)
-
-    @classmethod
-    def compute(cls, board):
-        return {
-            "White_King_Attackers": cls.king_attackers(board, chess.WHITE),
-            "Black_King_Attackers": cls.king_attackers(board, chess.BLACK),
-            "White_King_Zone_Attackers": cls.king_zone_attackers(board, chess.WHITE),
-            "Black_King_Zone_Attackers": cls.king_zone_attackers(board, chess.BLACK),
-        }
+        return out
 
 
-# -------------------- Positional Control --------------------
+########################## Attack ##########################
 
-class PositionalControl(FeatureBundle):
-    name = "Positional Control"
-    features = {"Center_Control_White", "Center_Control_Black"}
+
+class Attack(FeatureBundle):
+    name = "Relations"
+    features = {
+        "Threats_Created_White", "Threats_Created_Black",
+        "Hanging_Pieces_White", "Hanging_Pieces_Black",
+        "Hanging_Points_White", "Hanging_Points_Black",
+        "Undefended_Pieces_White", "Undefended_Pieces_Black",
+        "Undefended_Points_White", "Undefended_Points_Black"
+    }
 
     @staticmethod
-    def center_control(board, color):
-        return sum(1 for sq in CENTRAL_SQUARES if board.is_attacked_by(color, sq))
+    def compute(board):
+        out = {}
 
-    @classmethod
-    def compute(cls, board):
-        return {
-            "Center_Control_White": cls.center_control(board, chess.WHITE),
-            "Center_Control_Black": cls.center_control(board, chess.BLACK)
-        }
+        for color, cname in [(chess.WHITE, "White"), (chess.BLACK, "Black")]:
+            enemy = not color
+
+            # THREATS: enemy pieces attacked by color
+            threats = 0
+            for ptype in (chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN):
+                for sq in board.pieces(ptype, enemy):
+                    if board.is_attacked_by(color, sq):
+                        threats += 1
+            out[f"Threats_Created_{cname}"] = threats
+
+            # HANGING
+            h_count = 0
+            h_pts = 0
+            u_count = 0
+            u_pts = 0
+
+            for ptype in (chess.PAWN, chess.KNIGHT, chess.BISHOP, chess.ROOK, chess.QUEEN):
+                for sq in board.pieces(ptype, color):
+                    defended = board.is_attacked_by(color, sq)
+                    attacked = board.is_attacked_by(enemy, sq)
+
+                    if attacked and not defended:
+                        h_count += 1
+                        h_pts += PIECE_VALUES[ptype]
+
+                    if not defended:
+                        u_count += 1
+                        u_pts += PIECE_VALUES[ptype]
+
+            out[f"Hanging_Pieces_{cname}"] = h_count
+            out[f"Hanging_Points_{cname}"] = h_pts
+            out[f"Undefended_Pieces_{cname}"] = u_count
+            out[f"Undefended_Points_{cname}"] = u_pts
+
+        return out
 
 
-# -------------------- Game Info --------------------
+###################### Board Control #######################
+
+
+class BoardControl(FeatureBundle):
+    name = "Board Control"
+    features = {
+        "Central_Squares_Control_White", "Central_Squares_Control_Black",
+        "Open_Columns_White", "Open_Columns_Black",
+        "SemiOpen_Columns_White", "SemiOpen_Columns_Black",
+        "Rook_on_Open_Column_White", "Rook_on_Open_Column_Black",
+        "Protected_Advanced_Pawn_White", "Protected_Advanced_Pawn_Black",
+        "Rook_Queen_Aligned_White", "Rook_Queen_Aligned_Black",
+        "Rooks_Aligned_White", "Rooks_Aligned_Black",
+        "Controlled_Squares_White", "Controlled_Squares_Black"
+    }
+
+    central = [chess.D4, chess.D5, chess.E4, chess.E5]
+
+    @staticmethod
+    def _open_columns(board):
+        cols = []
+        for f in range(8):
+            has_w = any(board.piece_at(chess.square(f, r)) == chess.Piece(chess.PAWN, chess.WHITE) for r in range(8))
+            has_b = any(board.piece_at(chess.square(f, r)) == chess.Piece(chess.PAWN, chess.BLACK) for r in range(8))
+            cols.append((has_w, has_b))
+        return cols
+
+    @staticmethod
+    def _aligned(board, color):
+        rooks = list(board.pieces(chess.ROOK, color))
+        queens = list(board.pieces(chess.QUEEN, color))
+
+        rq = 0
+        rr = 0
+
+        # rook + queen
+        for r in rooks:
+            rf = chess.square_file(r)
+            rrk = chess.square_rank(r)
+            for q in queens:
+                if rf == chess.square_file(q) or rrk == chess.square_rank(q):
+                    rq = 1
+
+        # rook + rook
+        for i in range(len(rooks)):
+            r1 = rooks[i]
+            f1 = chess.square_file(r1)
+            r1r = chess.square_rank(r1)
+            for j in range(i + 1, len(rooks)):
+                r2 = rooks[j]
+                if f1 == chess.square_file(r2) or r1r == chess.square_rank(r2):
+                    rr = 1
+
+        return rq, rr
+
+    @staticmethod
+    def _protected_advanced_pawn(board, color):
+        if color == chess.WHITE:
+            ranks = range(3, 6)
+        else:
+            ranks = range(2, 5)
+
+        for r in ranks:
+            for f in range(8):
+                sq = chess.square(f, r)
+                piece = board.piece_at(sq)
+                if piece and piece.color == color and piece.piece_type == chess.PAWN:
+                    # check if any friendly piece attacks sq (excluding pawns)
+                    if any(board.is_attacked_by(color, sq2)
+                           for sq2 in board.pieces(chess.KNIGHT, color)
+                                      | board.pieces(chess.BISHOP, color)
+                                      | board.pieces(chess.ROOK, color)
+                                      | board.pieces(chess.QUEEN, color)):
+                        return 1
+        return 0
+
+    @staticmethod
+    def compute(board):
+        cols = BoardControl._open_columns(board)
+        out = {}
+
+        for color, cname in [(chess.WHITE, "White"), (chess.BLACK, "Black")]:
+            # central control
+            out[f"Central_Squares_Control_{cname}"] = sum(
+                1 for sq in BoardControl.central if board.is_attacked_by(color, sq)
+            )
+
+            # open + semi-open
+            open_c = 0
+            semi_c = 0
+            for f, (has_w, has_b) in enumerate(cols):
+                if not has_w and not has_b:
+                    open_c += 1
+                else:
+                    if color == chess.WHITE:
+                        if not has_w:
+                            semi_c += 1
+                    else:
+                        if not has_b:
+                            semi_c += 1
+
+            out[f"Open_Columns_{cname}"] = open_c
+            out[f"SemiOpen_Columns_{cname}"] = semi_c
+
+            # rook on open column
+            rook_flag = 0
+            for sq in board.pieces(chess.ROOK, color):
+                f = chess.square_file(sq)
+                has_w, has_b = cols[f]
+                if not has_w and not has_b:
+                    rook_flag = 1
+                    break
+            out[f"Rook_on_Open_Column_{cname}"] = rook_flag
+
+            # protected advanced pawn
+            out[f"Protected_Advanced_Pawn_{cname}"] = BoardControl._protected_advanced_pawn(board, color)
+
+            # alignments
+            rq, rr = BoardControl._aligned(board, color)
+            out[f"Rook_Queen_Aligned_{cname}"] = rq
+            out[f"Rooks_Aligned_{cname}"] = rr
+
+            # total controlled squares
+            count_sq = 0
+            for sq in chess.SQUARES:
+                if board.is_attacked_by(color, sq):
+                    count_sq += 1
+            out[f"Controlled_Squares_{cname}"] = count_sq
+
+        return out
+
+
+######################## Game Info #########################
+
 
 class GameInfo(FeatureBundle):
     name = "Game Info"
@@ -358,12 +522,15 @@ class GameInfo(FeatureBundle):
         }
 
 
+#################### Transformers List #####################
+
+
 FEATURE_TRANSFORMERS = [
     PieceInfo,
     PawnStructure,
     KingSafety,
     Mobility,
-    Attackers,
-    PositionalControl,
+    Attack,
+    BoardControl,
     GameInfo
 ]

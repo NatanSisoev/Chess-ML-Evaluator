@@ -10,26 +10,33 @@ from tqdm import tqdm
 from chess_eval.constants import *
 
 
-class EvaluationCleaner:
-    name = "Evaluation Cleaner"
-    features = []
-
-    @staticmethod
-    def clean(df: pd.DataFrame, mode: str = "remove", threshold: int = 1000) -> pd.DataFrame:
-        df = df[~df[EVAL].astype(str).str.contains("#")]
-        df.loc[:, EVAL] = pd.to_numeric(df[EVAL], errors="coerce").astype(int)
-        if mode == "clip":
-            df.loc[:, EVAL] = np.clip(df[EVAL], -threshold, threshold)
-        elif mode == "remove":
-            df = df[df[EVAL].abs() <= threshold]
-        else:
-            raise ValueError("mode must be 'clip' or 'remove'")
-        return df
+def clean(df: pd.DataFrame, mode: str = "remove", threshold: int = 1000) -> pd.DataFrame:
+    df = df[~df[EVAL].astype(str).str.contains("#")]
+    df.loc[:, EVAL] = pd.to_numeric(df[EVAL], errors="coerce").astype(int)
+    if mode == "clip":
+        df.loc[:, EVAL] = np.clip(df[EVAL], -threshold, threshold)
+    elif mode == "remove":
+        df = df[df[EVAL].abs() <= threshold]
+    else:
+        raise ValueError("mode must be 'clip' or 'remove'")
+    return df
 
 
 class DataManager:
-    def __init__(self, filepath: str, read_size: int = 5_000_000, sample_size: int = 100_000, test_size: float = 0.2,
-                 random_state: int = 99, features: list = None, cleaner=EvaluationCleaner.clean,
+    """
+    The most important function from this class is apply_transformers,
+    which develops the application of each transformer in our dataset,
+    and updating only the features set (each transformer has to be defined
+    before applying it). As we are just interested in the features,
+    there is no need to accumulate the transformers, so we replace
+    the last transformers for the new ones in every iteration.
+    We make sure we only apply the transformer if its features
+    are not already in the dataset.
+    """
+
+    def __init__(self, filepath: str = DATASET_FILE, read_size: int = None, sample_size: int = 100_000,
+                 test_size: float = 0.2,
+                 random_state: int = 99, features: list = None, cleaner=clean,
                  transformers: list = None):
         self.filepath = filepath
         self.read_size = read_size
@@ -40,9 +47,8 @@ class DataManager:
         self.cleaner = cleaner
         self.transformers = transformers or []  # each element is a class with a 'transform' method and; a 'name','features' and 'methods' attributes corresponding to the transformer identification.
 
-        assert sample_size <= read_size, f"Sample size ({sample_size}) must be smaller than read size ({read_size})."
-
         self.df_all = pd.read_csv(filepath, nrows=read_size)
+        self.df_raw = self.df_all
         self.df = None
 
         self.X = None

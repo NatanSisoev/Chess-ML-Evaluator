@@ -25,7 +25,7 @@ Chess Evaluations/
 
 ## Getting Started
 
-This project uses [uv](https://uv.rst.sh/) for dependency and project management.
+This project uses __[uv](https://uv.rst.sh/)__ for dependency and project management.
 
 1. Install `uv` globally if not already installed:
 
@@ -79,118 +79,124 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 
 ## Features
 
-1. Material
+### PieceInfo
 
-   * Nombre de peons blanc/negre
-   * Nombre de cavalls blanc/negre
-   * Nombre d’alfils blanc/negre
-   * Nombre de torres blanc/negre
-   * Nombre de dames blanc/negre
-   * Material total blanc
-   * Material total negre
+- White_Pieces
+- Black_Pieces
+- White_Piece_Value
+- Black_Piece_Value
+- White_Pawn
+- Black_Pawn
+- White_Knight
+- Black_Knight
+- White_Bishop
+- Black_Bishop
+- White_Rook
+- Black_Rook
+- White_Queen
+- Black_Queen
+- White_Central_Pieces
+- Black_Central_Pieces
 
-2. Mobilitat (per cada peça)
+### PawnStructure
 
-   * Mobilitat per peça (cavalls, alfils, torres, dames)
+- Isolated_Pawns_White
+- Isolated_Pawns_Black
+- Doubled_Pawns_White
+- Doubled_Pawns_Black
+- Passed_Pawns_White
+- Passed_Pawns_Black
+- Pawn_Islands_White
+- Pawn_Islands_Black
 
-3. Seguretat del rei
+### KingSafety
 
-   * Distància del rei a la línia de fons
-   * Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
-   * Enroc fet (sí/no)
-   * Enroc disponible (sí/no)
-   * Nombre de peces enemigues atacant caselles al voltant del rei
+- King_Castled_White
+- King_Castled_Black
+- King_Pawns_White
+- King_Pawns_Black
+- Open_Files
+- King_Distance_to_Last_Rank_White
+- King_Distance_to_Last_Rank_Black
+- King_Castling_Rights_White
+- King_Castling_Rights_Black
+- King_Front_Pawns_White
+- King_Front_Pawns_Black
+- King_In_Check_White
+- King_In_Check_Black
+- King_Attacked_Neighbours_White
+- King_Attacked_Neighbours_Black
 
-4. Control del tauler
+### Mobility
 
-   * Nombre de caselles centrals controlades (d4, d5, e4, e5) (també podríem valorar com si fos una convolució, tot el taulell, així tenim en compte totes les caselles, i hi assignem el valor en funció del que creiem) o, bé podríem crear una altra feature que sigui una total i una altra  més específica
-   * Control de columnes obertes i semiobertes
-   * Torre en columna oberta (sí/no)
-   * Peó avançat protegit (sí/no)
-   * Torre + dama alineades
-   * Torres aliniades
-   * Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
+- Mobility_King_White
+- Mobility_Queen_White
+- Mobility_Rook_White
+- Mobility_Bishop_White
+- Mobility_Knight_White
+- Mobility_Pawn_White
+- Mobility_King_Black
+- Mobility_Queen_Black
+- Mobility_Rook_Black
+- Mobility_Bishop_Black
+- Mobility_Knight_Black
+- Mobility_Pawn_Black
 
-5. Estructura peons
+### Attack
 
-   * Files sense peons
-   * Nombre d’illetes de peons
-   * Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
-   * Peons passats
-   * Peons doblats
-   * Peons aïllats
-   * Peons endarrerits
-   * Peons candidats a promoció
+- Threats_Created_White
+- Threats_Created_Black
+- Hanging_Pieces_White
+- Hanging_Pieces_Black
+- Hanging_Points_White
+- Hanging_Points_Black
+- Undefended_Pieces_White
+- Undefended_Pieces_Black
+- Undefended_Points_White
+- Undefended_Points_Black
 
-6. Miscellaneous
+### BoardControl
 
-   * Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
-   * Halfmove clock
-   * Player to move
+- Central_Squares_Control_White
+- Central_Squares_Control_Black
+- Open_Columns_White
+- Open_Columns_Black
+- SemiOpen_Columns_White
+- SemiOpen_Columns_Black
+- Rook_on_Open_Column_White
+- Rook_on_Open_Column_Black
+- Protected_Advanced_Pawn_White
+- Protected_Advanced_Pawn_Black
+- Rook_Queen_Aligned_White
+- Rook_Queen_Aligned_Black
+- Rooks_Aligned_White
+- Rooks_Aligned_Black
+- Controlled_Squares_White
+- Controlled_Squares_Black
 
-7. Relacions (totals, amb punts)
+### GameInfo
 
-   * Nombre d’amenaces creades
-   * Nombre de peces penjades (atacada & no defensada)
-   * Nombre de peces indefenses
+- Halfmove_Clock
+- Fullmove_Number
+- Phase
+- Side_To_Move_White
+- Has_En_Passant
 
-8. Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
-
-   * Mobilitat relativa (blanc/negre)
-   * Peons passats protegits − peons passats enemics
-   * Control central relatiu
-
-### TODO
-
-- [x] Material
-   - [x] Nombre de peons blanc/negre
-   - [x] Nombre de cavalls blanc/negre
-   - [x] Nombre d’alfils blanc/negre
-   - [x] Nombre de torres blanc/negre
-   - [x] Nombre de dames blanc/negre
-   - [x] Material total blanc
-   - [x] Material total negre
-- [ ] Mobilitat
-  - [ ] Mobilitat total de les peces blanques
-  - [ ] Mobilitat total de les peces negres
-  - [ ] Mobilitat per peça (cavalls, alfils, torres, dames)
-- [ ] Seguretat del rei
-  - [x] Distància del rei a la línia de fons
-  - [x] Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
-  - [x] Enroc fet (sí/no)
-  - [x] Enroc disponible (sí/no)
-  - [x] Nombre de peces enemigues atacant caselles al voltant del rei
-- [ ] Control del tauler
-  - [ ] Nombre de caselles centrals controlades (d4, d5, e4, e5) (també podríem valorar com si fos una convolució, tot el taulell, així tenim en compte totes les caselles, i hi assignem el valor en funció del que creiem) o, bé podríem crear una altra feature que sigui una total i una altra  més específica
-  - [ ] Control de columnes obertes i semiobertes
-  - [ ] Torre en columna oberta (sí/no)
-  - [ ] Peó avançat protegit (sí/no)
-  - [ ] Torre + dama alineades
-  - [ ] Torres aliniades
-  - [ ] Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
-- [ ] Estructura peons
-  - [ ] Files sense peons
-  - [ ] Nombre d’illetes de peons
-  - [ ] Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
-  - [ ] Peons passats
-  - [ ] Peons doblats
-  - [ ] Peons aïllats
-  - [ ] Peons endarrerits
-  - [ ] Peons candidats a promoció
-- [ ] Fase
-  - [ ] Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
-- [ ] Relacions
-  - [ ] Nombre d’amenaces creades
-  - [ ] Nombre de peces penjades (atacada & no defensada)
-  - [ ] Nombre de peces indefenses
-  - [ ] Nombre de peces atacades menys peces defensades
-  - [ ] Torn per jugar (blanc/negre)
-- [ ] Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
-  - [ ] Mobilitat relativa (blanc/negre)
-  - [ ] Peons passats protegits − peons passats enemics
-  - [ ] Control central relatiu
 
 ## Changelog
+
+##### 2025-11-26 - Natan Sisoev
+
+- merged feature transformers with `FeatureBundle` class
+- separated `main.ipynb` notebook into
+  1. EDA
+  2. Preprocessing
+  3. Feature Engineering
+  4. Metric Selection
+  5. Cross-Validation
+  6. Model Selection
+  7. Hyperparameters
+- improved README
 
 ##### 2025-11-25 - Natan Sisoev
 
@@ -359,6 +365,13 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 - analyzed predicted sign only: accuracy, recall and scatter plot to see correlation
 - around 0.67 accuracy and the scatter plot looked ok for only two features
 - decided to continue with this dataset
+
+## References
+
+- Dataset: https://www.kaggle.com/datasets/ronakbadhe/chess-evaluations/data
+- Python-chess: https://www.kaggle.com/code/wlifferth/part-1-understanding-python-chess-and-fen
+- Chess FEN: https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
+- Piece Values: https://chess.fandom.com/wiki/Value
 
 ## Authors
 
