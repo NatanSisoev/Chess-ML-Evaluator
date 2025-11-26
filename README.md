@@ -1,74 +1,212 @@
 # Chess Evaluations
 
-ML based chess positions evaluator.
+A machine-learning-based chess position evaluator. This project extracts features from chess positions in FEN format and trains models to predict position evaluations.
 
-# Dataset
+## Folder Structure
 
-Dataset: https://www.kaggle.com/datasets/ronakbadhe/chess-evaluations
-
-To download run (see [official documentation](https://www.kaggle.com/docs/api)):
-
-```bash
-kaggle datasets download -d ronakbadhe/chess-evaluations -p data --unzip
+```
+Chess Evaluations/
+├─ chess_eval/            # Python package with all core code
+│  ├─ __init__.py
+│  ├─ constants.py        # constants like piece values
+│  ├─ features.py         # feature transformers
+│  ├─ managers.py         # data, model, metrics managers
+│  └─ storage.py          # feature and model storage
+├─ data/                  # datasets
+│  └─ features/           # pickled feature datasets with metadata.json
+├─ models/                # fitted models with metadata.json
+├─ notebooks/             # Jupyter notebooks
+│  ├─ main.ipynb          # legacy notebook
+│  ├─ short.ipynb         # minimal working example
+│  └─ storage.ipynb       # examples of storing features and models
+├─ requirements.txt       # legacy pip requirements
+└─ README.md
 ```
 
-# TODO
+## Getting Started
+
+This project uses [uv](https://uv.rst.sh/) for dependency and project management.
+
+1. Install `uv` globally if not already installed:
+
+```bash
+pip install uv
+```
+
+2. Install the project and its dependencies (from `uv.lock`):
+
+```bash
+uv install
+```
+
+This will create a `.venv` (if not existing) and install all locked dependencies.
+
+3. Activate the virtual environment managed by uv:
+
+```bash
+uv shell
+```
+
+4. Run scripts or notebooks using the environment:
+
+```bash
+uv run python notebooks/short.ipynb
+```
+
+5. Add a new dependency:
+
+```bash
+uv pip install <package_name>
+uv lock  # update uv.lock
+```
+
+## Dataset
+
+Original Dataset: https://www.kaggle.com/datasets/ronakbadhe/chess-evaluations
+
+Download and unzip (see [official documentation](https://www.kaggle.com/docs/api)):
+
+```bash
+kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
+```
+
+## TODO
 
 - [ ] narrate the full code (flowy from start to end)
 - [ ] count trivial threats by pawns: calculate the value of all pieces threatened by opposite pawns
 - [ ] add more features
 - [ ] remove useless features, find best feature combinations (high `read_size`, low `sample_size`)
 
-# Features
+## Features
 
 1. Material
-Nombre de peons blanc/negre
-Nombre de cavalls blanc/negre
-Nombre d’alfils blanc/negre
-Nombre de torres blanc/negre
-Nombre de dames blanc/negre
-Material total blanc
-Material total negre
+
+   * Nombre de peons blanc/negre
+   * Nombre de cavalls blanc/negre
+   * Nombre d’alfils blanc/negre
+   * Nombre de torres blanc/negre
+   * Nombre de dames blanc/negre
+   * Material total blanc
+   * Material total negre
+
 2. Mobilitat (per cada peça)
-Mobilitat per peça (cavalls, alfils, torres, dames)
+
+   * Mobilitat per peça (cavalls, alfils, torres, dames)
+
 3. Seguretat del rei
-Distància del rei a la línia de fons
-Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
-Enroc fet (sí/no)
-Enroc disponible (sí/no)
-Nombre de peces enemigues atacant caselles al voltant del rei
+
+   * Distància del rei a la línia de fons
+   * Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
+   * Enroc fet (sí/no)
+   * Enroc disponible (sí/no)
+   * Nombre de peces enemigues atacant caselles al voltant del rei
+
 4. Control del tauler
-Nombre de caselles centrals controlades (d4, d5, e4, e5) (també podríem valorar com si fos una convolució, tot el taulell, així tenim en compte totes les caselles, i hi assignem el valor en funció del que creiem) o, bé podríem crear una altra feature que sigui una total i una altra  més específica
-Control de columnes obertes i semiobertes
-Torre en columna oberta (sí/no)
-Peó avançat protegit (sí/no)
-Torre + dama alineades
-Torres aliniades
-Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
+
+   * Nombre de caselles centrals controlades (d4, d5, e4, e5) (també podríem valorar com si fos una convolució, tot el taulell, així tenim en compte totes les caselles, i hi assignem el valor en funció del que creiem) o, bé podríem crear una altra feature que sigui una total i una altra  més específica
+   * Control de columnes obertes i semiobertes
+   * Torre en columna oberta (sí/no)
+   * Peó avançat protegit (sí/no)
+   * Torre + dama alineades
+   * Torres aliniades
+   * Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
+
 5. Estructura peons
-Files sense peons
-Nombre d’illetes de peons
-Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
-Peons passats
-Peons doblats
-Peons aïllats
-Peons endarrerits
-Peons candidats a promoció
+
+   * Files sense peons
+   * Nombre d’illetes de peons
+   * Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
+   * Peons passats
+   * Peons doblats
+   * Peons aïllats
+   * Peons endarrerits
+   * Peons candidats a promoció
+
 6. Miscellaneous
-Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
-Halfmove clock
-Player to move
+
+   * Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
+   * Halfmove clock
+   * Player to move
+
 7. Relacions (totals, amb punts)
-Nombre d’amenaces creades
-Nombre de peces penjades (atacada & no defensada)
-Nombre de peces indefenses
+
+   * Nombre d’amenaces creades
+   * Nombre de peces penjades (atacada & no defensada)
+   * Nombre de peces indefenses
+
 8. Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
-Mobilitat relativa (blanc/negre)
-Peons passats protegits − peons passats enemics
-Control central relatiu
 
+   * Mobilitat relativa (blanc/negre)
+   * Peons passats protegits − peons passats enemics
+   * Control central relatiu
 
-# Changelog
+### TODO
+
+- [x] Material
+   - [x] Nombre de peons blanc/negre
+   - [x] Nombre de cavalls blanc/negre
+   - [x] Nombre d’alfils blanc/negre
+   - [x] Nombre de torres blanc/negre
+   - [x] Nombre de dames blanc/negre
+   - [x] Material total blanc
+   - [x] Material total negre
+- [ ] Mobilitat
+  - [ ] Mobilitat total de les peces blanques
+  - [ ] Mobilitat total de les peces negres
+  - [ ] Mobilitat per peça (cavalls, alfils, torres, dames)
+- [ ] Seguretat del rei
+  - [x] Distància del rei a la línia de fons
+  - [x] Línia de peons defensant rei (linia superior directament, o també podríem fer la següent)
+  - [x] Enroc fet (sí/no)
+  - [x] Enroc disponible (sí/no)
+  - [x] Nombre de peces enemigues atacant caselles al voltant del rei
+- [ ] Control del tauler
+  - [ ] Nombre de caselles centrals controlades (d4, d5, e4, e5) (també podríem valorar com si fos una convolució, tot el taulell, així tenim en compte totes les caselles, i hi assignem el valor en funció del que creiem) o, bé podríem crear una altra feature que sigui una total i una altra  més específica
+  - [ ] Control de columnes obertes i semiobertes
+  - [ ] Torre en columna oberta (sí/no)
+  - [ ] Peó avançat protegit (sí/no)
+  - [ ] Torre + dama alineades
+  - [ ] Torres aliniades
+  - [ ] Caselles controlades per cada peça  (igual que la llista que he fet abans del material)
+- [ ] Estructura peons
+  - [ ] Files sense peons
+  - [ ] Nombre d’illetes de peons
+  - [ ] Nombre de peons en caselles del color de l’alfil ja que tenim alfil en blanc i alfil en negre
+  - [ ] Peons passats
+  - [ ] Peons doblats
+  - [ ] Peons aïllats
+  - [ ] Peons endarrerits
+  - [ ] Peons candidats a promoció
+- [ ] Fase
+  - [ ] Fase del joc (obertura, mig joc, final) (binari per normalització) MOLT IMPORTANT !!! (crec)
+- [ ] Relacions
+  - [ ] Nombre d’amenaces creades
+  - [ ] Nombre de peces penjades (atacada & no defensada)
+  - [ ] Nombre de peces indefenses
+  - [ ] Nombre de peces atacades menys peces defensades
+  - [ ] Torn per jugar (blanc/negre)
+- [ ] Features derivades (però crec que tot això ja ho gestiona bastant la fase del joc)
+  - [ ] Mobilitat relativa (blanc/negre)
+  - [ ] Peons passats protegits − peons passats enemics
+  - [ ] Control central relatiu
+
+## Changelog
+
+##### 2025-11-25 - Natan Sisoev
+
+- started `refactor` branch
+- refactored the gigantic main.ipynb into:
+  - managers
+  - constants (uppercase values)
+  - features (all class feature transformers)
+  - storage (way to store computed features and fitted models)
+  - `mwe.ipynb`: minimal working example of a Gradient Boosting model
+- re-organized the structure of the project into the python package `chess_eval` and separate data, models and notebooks folders
+- migrated to using `uv` for package managing and project metadata logging
+- created `Mobility`, `Attackers`, `PositionalControl` and `GameInfo` feature transformers
+- added `storage.ipynb` notebook showing usage of the `StorageManager` class
+- improved README: added folder structure and getting started
+
 ##### 2025-11-24 - Ferran Villarta
 - created `Relations` transformer:
   - `Relations`:
@@ -124,6 +262,13 @@ Control central relatiu
     - Number_of_Moves
     - Halfmove_Clock
 - commented the code
+
+##### 2025-11-24 - Natan Sisoev
+
+- finished king safety features
+- explored R^2 and R^2 adjusted metrics
+- improved managers' communications
+- tried different read/sample sizes to see the effect
 
 ##### 2025-11-19 - Natan Sisoev
 
@@ -215,7 +360,7 @@ Control central relatiu
 - around 0.67 accuracy and the scatter plot looked ok for only two features
 - decided to continue with this dataset
 
-# Authors
+## Authors
 
 - Natan Sisoev
 - Ferran Villarta
