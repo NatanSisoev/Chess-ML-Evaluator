@@ -212,6 +212,15 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 - merge main with improvements
 - updated TODO
 - updated storage manager to new DataManager (removed attribute features -> X.columns)
+- gathered a bunch of models to test
+- improved storage system: created easy access `load_dataset` and `load_model` functions
+- created `save_datasets.ipynb` and `save_models.ipynb` notebooks and created script to run overnight
+- add `frac` option for dataframe sampling
+- adapted `DataManager` to accept dictionary with metadata (for the storage system)
+- improved `config.py` file
+- added easy use `evaluate` function
+- started KNN hyperparameter optimization and plots
+- improved storage listing and display
 
 ##### 2025-11-26 - Natan Sisoev
 

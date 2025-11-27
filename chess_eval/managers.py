@@ -1,13 +1,13 @@
 import time
-import matplotlib.pyplot as plt
+
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, root_mean_squared_error
 from sklearn.model_selection import train_test_split
-from tqdm import tqdm
 
-from chess_eval.constants import *
+from chess_eval.config import *
+from chess_eval.features import FEATURE_TRANSFORMERS
 
 
 def clean(df: pd.DataFrame, mode: str = "remove", threshold: int = EVAL_THRESHOLD) -> pd.DataFrame:
@@ -50,13 +50,16 @@ class DataManager:
 
     def __init__(
         self,
+        df: pd.DataFrame = None,
         filepath: str = DATASET_FILE,
         read_size: int | None = READ_SIZE,
-        sample_size: int = SAMPLE_SIZE,
+        sample_size: int | None = SAMPLE_SIZE,
+        frac: float = None,
         test_size: float = TEST_SIZE,
         random_state: int = RANDOM_STATE,
-        cleaner=clean,
-        transformers: list = None,
+        cleaner = clean,
+        transformers: list | None = FEATURE_TRANSFORMERS,
+        meta: dict = None,
     ):
         """
         Parameters
@@ -76,16 +79,23 @@ class DataManager:
         transformers : list
             List of feature transformer objects.
         """
-        self.filepath = filepath
-        self.read_size = read_size
-        self.sample_size = sample_size
-        self.test_size = test_size
-        self.random_state = random_state
-        self.cleaner = cleaner if cleaner is not None else lambda x: x
-        self.transformers = transformers or []
+        if meta is None:
+            meta = {}
+
+        self.filepath        = meta.get("filepath", filepath)
+        self.read_size       = meta.get("read_size", read_size)
+        self.sample_size     = meta.get("sample_size", sample_size)
+        self.frac            = meta.get("frac", frac)
+        self.test_size       = meta.get("test_size", test_size)
+        self.random_state    = meta.get("random_state", random_state)
+        self.transformers    = transformers
+        self.cleaner         = cleaner if cleaner is not None else lambda x: x
 
         # Load and clean dataset
-        self.df_all = self.cleaner(pd.read_csv(filepath, nrows=read_size))
+        if df is None:
+            self.df_all = self.cleaner(pd.read_csv(filepath, nrows=read_size))
+        else:
+            self.df_all = df
 
         # Sampled indices and train/test indices
         self.sample_idx = None
@@ -96,7 +106,7 @@ class DataManager:
         self.sample()
         if self.transformers:
             self.apply_transformers()
-            self.train_test_split()
+        self.train_test_split()
 
     @property
     def df(self):
@@ -133,7 +143,7 @@ class DataManager:
         """Return testing targets."""
         return self.y.iloc[self.test_idx]
 
-    def sample(self, sample_size: int = None) -> pd.DataFrame:
+    def sample(self, sample_size: int = None, frac: float = None) -> pd.DataFrame:
         """
         Sample random rows from the cleaned dataset.
 
@@ -141,6 +151,8 @@ class DataManager:
         ----------
         sample_size : int, optional
             Number of rows to sample. Uses class default if None.
+        frac: float, optional
+            Fraction of rows to sample. Uses sample_size if None.
 
         Returns
         -------
@@ -149,9 +161,20 @@ class DataManager:
         """
         if sample_size:
             self.sample_size = sample_size
-        self.sample_idx = self.df_all.sample(
-            n=self.sample_size, random_state=self.random_state
-        ).index.to_numpy()
+        if frac is not None:
+            self.frac = frac
+
+        if self.frac is not None:
+            self.sample_idx = self.df_all.sample(
+                frac=self.frac, random_state=self.random_state
+            ).index.to_numpy()
+        else:
+            self.sample_idx = self.df_all.sample(
+                n=self.sample_size, random_state=self.random_state
+            ).index.to_numpy()
+
+        self.sample_size = len(self.sample_idx)
+
         return self.df
 
     def apply_transformers(self, transformers=None) -> pd.DataFrame:
@@ -335,10 +358,8 @@ class MetricsManager:
             mask = true_sign > 0
         elif player == "black":
             mask = true_sign < 0
-        elif player == "draw":
-            mask = true_sign == 0
         else:
-            raise ValueError("player must be white/black/draw")
+            raise ValueError("player must be white/black")
 
         if mask.sum() == 0:
             return np.nan
@@ -389,20 +410,19 @@ class MetricsManager:
             Dictionary of metrics including MSE, R², recalls, and Spearman correlation.
         """
         return {
-            "mse": mean_squared_error(self.y_true, self.y_pred),
-            "sign_accuracy": self.sign_accuracy(),
-            "white_recall": self.sign_recall("white"),
-            "black_recall": self.sign_recall("black"),
-            "draw_recall": self.sign_recall("draw"),
-            f"acc_{tol}_tol": self.centipawn_accuracy(tol),
-            "r2": self.r2(),
-            "r2_adjusted": self.r2_adjusted(),
-            "spearman": self.spearman_rank_correlation(),
+            "Spearman Rank": self.spearman_rank_correlation(),
+            f"Accuracy (±{tol})": self.centipawn_accuracy(tol),
+            "RMSE": root_mean_squared_error(self.y_true, self.y_pred),
+            "Accuracy (sign)": self.sign_accuracy(),
+            "Recall (white)": self.sign_recall("white"),
+            "Recall (black)": self.sign_recall("black"),
+            "R^2": self.r2(),
+            "R^2 adjusted": self.r2_adjusted(),
         }
 
     # --- Plotting Methods ---
 
-    def plot_scatter(self, save=False):
+    def plot_scatter(self, save=False, file=None):
         """
         Scatter plot of true vs predicted values.
 
@@ -410,16 +430,21 @@ class MetricsManager:
         ----------
         save : bool
             Whether to save the plot as PNG.
+        file : str
+            Custom file name, prefix `scatter_` will be added.
         """
         plt.scatter(self.y_true, self.y_pred, alpha=0.5)
         plt.xlim(-EVAL_THRESHOLD, EVAL_THRESHOLD)
         plt.ylim(-EVAL_THRESHOLD, EVAL_THRESHOLD)
         plt.xlabel("True")
         plt.ylabel("Predicted")
-        plt.title("True vs Predicted Evaluation")
+        plt.title("Evaluation Predictions")
 
         if save:
-            fname = f"scatter_{time.strftime('%Y%m%d_%H%M%S')}.png"
+            if file is None:
+                fname = f"scatter_{time.strftime('%Y%m%d_%H%M%S')}.png"
+            else:
+                fname = f"scatter_{file}.png"
             fpath = self.plots_dir / fname
             plt.savefig(fpath, dpi=FIG_DPI)
 
@@ -447,3 +472,14 @@ class MetricsManager:
             fname = f"tol_acc_{time.strftime('%Y%m%d_%H%M%S')}.png"
             fpath = self.plots_dir / fname
             plt.savefig(fpath, dpi=FIG_DPI)
+
+
+def evaluate(mm: ModelManager, save=True, file=None):
+    if mm.y_pred is None:
+        mm.predict()
+    metm = MetricsManager(mm)
+    metm.plot_scatter(save=save, file=file)
+    data = metm.compute_metrics().items()
+    df = pd.DataFrame(data, columns=["Metric", "Value"])
+    df.style.hide(axis="index")
+    return df

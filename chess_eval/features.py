@@ -2,7 +2,7 @@ import abc
 
 import pandas as pd
 
-from chess_eval.constants import *
+from chess_eval.config import *
 
 
 ###################### Feature Bundle ######################
