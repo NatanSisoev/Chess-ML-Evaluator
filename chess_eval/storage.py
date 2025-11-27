@@ -18,8 +18,6 @@ class StorageManager:
         models   -> "../models"
     """
 
-    # TODO: store df and model, not the managers!!!
-
     def __init__(self,
                  dataset_dir: str = r"..\data\features",
                  model_dir: str = r"..\models"):
@@ -47,7 +45,7 @@ class StorageManager:
 
         # Pickle the entire DataManager
         with open(file_path, "wb") as f:
-            pickle.dump(dm, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(dm.df, f, protocol=pickle.HIGHEST_PROTOCOL) # Store only df, not the dm
 
         # Update metadata
         with open(self.dataset_meta_file, "r") as f:
@@ -82,9 +80,9 @@ class StorageManager:
 
         meta = all_metadata[name]
         with open(meta["path"], "rb") as f:
-            dm = pickle.load(f)
+            df = pickle.load(f) # Load only df, not the dm
 
-        return dm, meta
+        return df, meta
 
     def list_datasets(self) -> list[str]:
         with open(self.dataset_meta_file, "r") as f:
@@ -99,7 +97,7 @@ class StorageManager:
 
         # Pickle the entire ModelManager
         with open(file_path, "wb") as f:
-            pickle.dump(mm, f, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(mm.model, f, protocol=pickle.HIGHEST_PROTOCOL) # Store only model, not the mm
 
         # Update metadata
         with open(self.model_meta_file, "r") as f:
@@ -131,9 +129,9 @@ class StorageManager:
 
         meta = all_metadata[name]
         with open(meta["path"], "rb") as f:
-            mm = pickle.load(f)
+            model = pickle.load(f)
 
-        return mm, meta
+        return model, meta
 
     def list_models(self) -> list[str]:
         with open(self.model_meta_file, "r") as f:
