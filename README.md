@@ -5,22 +5,39 @@ A machine-learning-based chess position evaluator. This project extracts feature
 ## Folder Structure
 
 ```
-Chess Evaluations/
-├─ chess_eval/            # Python package with all core code
-│  ├─ __init__.py
-│  ├─ constants.py        # constants like piece values
-│  ├─ features.py         # feature transformers
-│  ├─ managers.py         # data, model, metrics managers
-│  └─ storage.py          # feature and model storage
-├─ data/                  # datasets
-│  └─ features/           # pickled feature datasets with metadata.json
-├─ models/                # fitted models with metadata.json
-├─ notebooks/             # Jupyter notebooks
-│  ├─ main.ipynb          # legacy notebook
-│  ├─ short.ipynb         # minimal working example
-│  └─ storage.ipynb       # examples of storing features and models
-├─ requirements.txt       # legacy pip requirements
-└─ README.md
+📁 Chess-ML-Evaluator/
+├── 📁 chess_eval/
+│   ├── 📄 __init__.py
+│   ├── 📄 constants.py
+│   ├── 📄 features.py
+│   ├── 📄 managers.py
+│   └── 📄 storage.py
+├── 📁 data/
+│   ├── 📁 raw/
+│   │   ├── 📄 chessData.csv
+│   │   ├── 📄 random_evals.csv
+│   │   └── 📄 tactic_evals.csv
+│   └── 📁 features/
+│       ├── 📄 example.pkl
+│       └── 🔢 metadata.json
+├── 📁 models/
+│   ├── 📄 example.pkl
+│   └── 🔢 metadata.json
+├── 📁 notebooks/
+│   ├── 📄 1_eda.ipynb
+│   ├── 📄 2_preprocessing.ipynb
+│   ├── 📄 3_features.ipynb
+│   ├── 📄 4_metric.ipynb
+│   ├── 📄 5_cv.ipynb
+│   ├── 📄 6_models.ipynb
+│   ├── 📄 7_hyperparameters.ipynb
+│   ├── 📄 mwe.ipynb
+│   └── 📄 storage.ipynb
+├── 📄 .gitignore
+├── 📄 .python-version
+├── 📄 pyproject.toml
+├── 📄 README.md
+└── 📄 uv.lock
 ```
 
 ## Getting Started
@@ -197,6 +214,9 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
   6. Model Selection
   7. Hyperparameters
 - improved README
+- improved DataManager to indexes instead of redundant copies
+- improved MetricsManager to save plots
+- done 1_eda.ipynb and 2_preprocessing.ipynb, finished both notebooks
 
 ##### 2025-11-25 - Natan Sisoev
 
