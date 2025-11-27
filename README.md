@@ -89,10 +89,15 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 
 ## TODO
 
-- [ ] narrate the full code (flowy from start to end)
-- [ ] count trivial threats by pawns: calculate the value of all pieces threatened by opposite pawns
-- [ ] add more features
-- [ ] remove useless features, find best feature combinations (high `read_size`, low `sample_size`)
+- [ ] notebooks
+  - [x] 1_eda.ipynb (1.6 chunked sampling pending)
+  - [x] 2_preprocessing.ipynb
+  - [ ] 3_features.ipynb
+  - [ ] 4_metric.ipynb
+  - [ ] 5_cv.ipynb
+  - [ ] 6_models.ipynb
+  - [ ] 7_hyperparameters.ipynb
+- [ ] transform the whole dataset with all features and save it to pkl for easier future access
 
 ## Features
 
@@ -201,6 +206,12 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 
 
 ## Changelog
+
+##### 2025-11-27 - Natan Sisoev
+
+- merge main with improvements
+- updated TODO
+- updated storage manager to new DataManager (removed attribute features -> X.columns)
 
 ##### 2025-11-26 - Natan Sisoev
 
