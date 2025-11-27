@@ -24,7 +24,7 @@ class StorageManager:
 
     def __init__(self,
                  dataset_dir: str = SAVED_DATASETS_DIR,
-                 model_dir: str = SABED_MODELS_DIR,
+                 model_dir: str = SAVED_MODELS_DIR,
         ) -> None:
         # Directories
         self.dataset_dir = dataset_dir
@@ -50,7 +50,7 @@ class StorageManager:
 
         # Pickle the entire DataManager
         with open(file_path, "wb") as f:
-            pickle.dump(dm.df, f, protocol=pickle.HIGHEST_PROTOCOL) # Store only df, not the dm
+            pickle.dump(dm.df, f, protocol=pickle.HIGHEST_PROTOCOL)  # type: ignore[arg-type]
 
         # Update metadata
         with open(self.dataset_meta_file, "r") as f:
@@ -89,7 +89,7 @@ class StorageManager:
 
         return df, meta
 
-    def list_datasets(self) -> list[tuple[str, tuple[int, int] | None, str]]:
+    def list_datasets(self) -> pd.DataFrame:
         with open(self.dataset_meta_file, "r") as f:
             all_metadata = json.load(f)
         data = [(name, meta.get("df_shape"), meta.get("notes")) for name, meta in all_metadata.items()]
@@ -105,7 +105,7 @@ class StorageManager:
 
         # Pickle the entire ModelManager
         with open(file_path, "wb") as f:
-            pickle.dump(mm.model, f, protocol=pickle.HIGHEST_PROTOCOL) # Store only model, not the mm
+            pickle.dump(mm.model, f, protocol=pickle.HIGHEST_PROTOCOL)  # type: ignore[arg-type]
 
         # Update metadata
         with open(self.model_meta_file, "r") as f:

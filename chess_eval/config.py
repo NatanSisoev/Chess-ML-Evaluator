@@ -15,9 +15,9 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
 from xgboost import XGBRegressor
 
-from tqdm import tqdm
-import numpy as np
-import pandas as pd
+from tqdm import tqdm  # type: ignore
+import numpy as np     # type: ignore
+import pandas as pd    # type: ignore
 from matplotlib import pyplot as plt
 
 # ----------------------------------------------------------------------

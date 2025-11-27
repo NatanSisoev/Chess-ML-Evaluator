@@ -1,7 +1,5 @@
 import abc
 
-import pandas as pd
-
 from chess_eval.config import *
 
 
@@ -20,7 +18,7 @@ class FeatureBundle(abc.ABC):
     @classmethod
     def transform(cls, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
-        df.drop(columns=cls.features, inplace=True, errors="ignore")
+        df.drop(columns=list(cls.features), inplace=True, errors="ignore")
         results = [cls.compute(chess.Board(fen)) for fen in df[FEN].values]
         return pd.concat([df, pd.DataFrame(results, index=df.index)], axis=1)
 

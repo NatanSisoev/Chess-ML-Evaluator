@@ -46,36 +46,36 @@ This project uses __[uv](https://uv.rst.sh/)__ for dependency and project manage
 
 1. Install `uv` globally if not already installed:
 
-```bash
-pip install uv
-```
+  ```bash
+  pip install uv
+  ```
 
 2. Install the project and its dependencies (from `uv.lock`):
 
-```bash
-uv install
-```
+  ```bash
+  uv install
+  ```
 
-This will create a `.venv` (if not existing) and install all locked dependencies.
+  This will create a `.venv` (if not existing) and install all locked dependencies.
 
 3. Activate the virtual environment managed by uv:
 
-```bash
-uv shell
-```
+  ```bash
+  uv shell
+  ```
 
 4. Run scripts or notebooks using the environment:
 
-```bash
-uv run python notebooks/short.ipynb
-```
+  ```bash
+  uv run python notebooks/short.ipynb
+  ```
 
 5. Add a new dependency:
 
-```bash
-uv pip install <package_name>
-uv lock  # update uv.lock
-```
+  ```bash
+  uv pip install <package_name>
+  uv lock  # update uv.lock
+  ```
 
 ## Dataset
 

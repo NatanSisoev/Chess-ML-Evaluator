@@ -3,7 +3,7 @@ import time
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
-from sklearn.metrics import mean_squared_error, r2_score, root_mean_squared_error
+from sklearn.metrics import r2_score, root_mean_squared_error
 from sklearn.model_selection import train_test_split
 
 from chess_eval.config import *
@@ -212,7 +212,7 @@ class DataManager:
 
         Parameters
         ----------
-        features : list, optional
+        features : list, optional  # TODO: add features
             Columns to use for splitting (defaults to all features).
         test_size : float, optional
             Fraction of test set.
@@ -226,8 +226,8 @@ class DataManager:
         """
         self.train_idx, self.test_idx = train_test_split(
             np.arange(self.sample_size),
-            test_size=self.test_size,
-            random_state=self.random_state,
+            test_size=test_size or self.test_size,
+            random_state=random_state or self.random_state,
         )
         return self.X_train, self.X_test, self.y_train, self.y_test
 
@@ -317,7 +317,7 @@ class MetricsManager:
         self.plots_dir = plots_dir
         self.plots_dir.mkdir(exist_ok=True)
 
-        custom_style()
+        apply_custom_style()
 
     # --- Properties ---
 
