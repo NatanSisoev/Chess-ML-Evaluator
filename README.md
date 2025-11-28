@@ -95,9 +95,9 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
   - [ ] 3_features.ipynb
   - [ ] 4_metric.ipynb
   - [ ] 5_cv.ipynb
-  - [ ] 6_models.ipynb
+  - [x] 6_models.ipynb
   - [ ] 7_hyperparameters.ipynb
-- [ ] transform the whole dataset with all features and save it to pkl for easier future access
+- [x] transform the whole dataset with all features and save it to pkl for easier future access
 
 ## Features
 
@@ -214,6 +214,8 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 - added a parallelized version to the transformer application method
 - added a check before overwriting a saved dataset/model
 - organized datasets and models storage notebooks
+- compared all models in `6_models.ipynb` and chose 3 winners: Ridge, XGBRegressor and KNN
+- trained and pickled a multilayer perceptron regressor with only the piece values at each square: model `MLPR_100k_rd`
 
 ##### 2025-11-27 - Natan Sisoev
 
@@ -263,6 +265,7 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 - improved README: added folder structure and getting started
 
 ##### 2025-11-24 - Ferran Villarta
+
 - created `Relations` transformer:
   - `Relations`:
     - Threats_Created_White
@@ -275,10 +278,10 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
     - Undefended_Pieces_Black
     - Undefended_Points_White
     - Undefended_Points_Black
-    
-##### 2025-11-24 - Ferran Villarta
-- Another way to measure accuracy is to model our data as a normal distribution `N(μ, σ)`, and then accept the prediction if it falls within the range `[evidence ± z_0.05]`.
 
+##### 2025-11-24 - Ferran Villarta
+
+- Another way to measure accuracy is to model our data as a normal distribution `N(μ, σ)`, and then accept the prediction if it falls within the range `[evidence ± z_0.05]`.
 - created transformers:
   - `BoardControl`:
     - Central_Squares_Control_White

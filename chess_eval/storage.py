@@ -52,7 +52,7 @@ class StorageManager:
         with open(self.dataset_meta_file, "r") as f:
             all_metadata = json.load(f)
 
-        if name in all_metadata and not force:
+        if (name in all_metadata) and not force:
             raise ValueError(f"Dataset {name} already exists.")
 
         # Pickle the entire DataManager
@@ -109,7 +109,7 @@ class StorageManager:
         with open(self.model_meta_file, "r") as f:
             all_metadata = json.load(f)
 
-        if name in all_metadata and not force:
+        if (name in all_metadata) and not force:
             raise ValueError(f"Model '{name}' already exists.")
 
         # Pickle the entire ModelManager
@@ -149,8 +149,8 @@ class StorageManager:
     def list_models(self):
         with open(self.model_meta_file, "r") as f:
             all_metadata = json.load(f)
-        data = [(meta.get("model_class"), str(Path(meta.get("training_dataset")).stem), meta.get("notes")) for name, meta in all_metadata.items()]
-        df = pd.DataFrame(data, columns=["Model", "Dataset", "Notes"])
+        data = [(name, meta.get("model_class"), str(Path(meta.get("training_dataset")).stem), meta.get("notes")) for name, meta in all_metadata.items()]
+        df = pd.DataFrame(data, columns=["Name", "Model", "Dataset", "Notes"])
         df.style.hide(axis="index")
         return df
 

@@ -2,14 +2,13 @@ from pathlib import Path
 
 import chess
 from lightgbm import LGBMRegressor
-from matplotlib.widgets import Lasso
 from sklearn.ensemble import (
     RandomForestRegressor,
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
     ExtraTreesRegressor,
 )
-from sklearn.linear_model import LinearRegression, Ridge, ElasticNet
+from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
@@ -88,17 +87,17 @@ apply_custom_style()
 # ----------------------------------------------------------------------
 
 MODELS = {
+    "KNeighborsRegressor": KNeighborsRegressor,
     "LinearRegression": LinearRegression,
+    "Ridge": Ridge,
+    "Lasso": Lasso,
+    "ElasticNet": ElasticNet,
     "RandomForestRegressor": RandomForestRegressor,
     "GradientBoostingRegressor": GradientBoostingRegressor,
     "HistGradientBoostingRegressor": HistGradientBoostingRegressor,
     "ExtraTreesRegressor": ExtraTreesRegressor,
-    "Ridge": Ridge,
-    "Lasso": Lasso,
-    "ElasticNet": ElasticNet,
-    "SVR": SVR,
-    "MLPRegressor": MLPRegressor,
     "XGBRegressor": XGBRegressor,
     "LGBMRegressor": LGBMRegressor,
-    "KNeighborsRegressor": KNeighborsRegressor,
+    "SVR": SVR,
+    "MLPRegressor": MLPRegressor,
 }

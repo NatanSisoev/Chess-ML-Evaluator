@@ -273,21 +273,20 @@ class ModelManager:
             Model with fit() and predict() methods.
         """
         self.model = model
-        self.y_true = None
         self.y_pred = None
 
-    def fit(self, dm: DataManager):
+    def fit(self, X_train: pd.DataFrame, y_train: pd.DataFrame):
         """
         Fit the model on the training dataset.
 
         Parameters
         ----------
-        dm : DataManager
-            DataManager instance containing train splits.
+        :param X_train:
+        :param y_train:
         """
-        self.model.fit(dm.X_train, dm.y_train)
+        self.model.fit(X_train, y_train)
 
-    def predict(self, dm: DataManager):
+    def predict(self, X_test: pd.DataFrame):
         """
         Predict target values for provided features or the test set.
 
@@ -298,11 +297,9 @@ class ModelManager:
 
         Returns
         -------
-        np.ndarray
-            Predictions.
+        :param X_test:
         """
-        self.y_pred = self.model.predict(dm.X_test)
-        self.y_true = dm.y_test
+        self.y_pred = self.model.predict(X_test)
         return self.y_pred
 
     def predict_fen(self, fen: str, transformers: list = FEATURE_TRANSFORMERS):
@@ -335,7 +332,7 @@ class MetricsManager:
     Compute evaluation metrics and provide plotting utilities for predictions.
     """
 
-    def __init__(self, mm: ModelManager, plots_dir=PLOTS_DIR):
+    def __init__(self, mm: ModelManager, dm: DataManager, plots_dir=PLOTS_DIR):
         """
         Parameters
         ----------
@@ -345,6 +342,7 @@ class MetricsManager:
             Directory to save plots.
         """
         self.mm = mm
+        self.dm = dm
         self.plots_dir = plots_dir
         self.plots_dir.mkdir(exist_ok=True)
 
@@ -355,7 +353,7 @@ class MetricsManager:
     @property
     def y_true(self):
         """Return ground truth target values (test set)."""
-        return self.mm.y_true
+        return self.dm.y_test
 
     @property
     def y_pred(self):
@@ -471,6 +469,8 @@ class MetricsManager:
             fpath = self.plots_dir / fname
             plt.savefig(fpath, dpi=FIG_DPI)
 
+        plt.show()
+
     def plot_tol_acc(self, max_tol=EVAL_THRESHOLD, save=False):
         """
         Plot accuracy as a function of tolerance and compute AUC.
@@ -496,11 +496,13 @@ class MetricsManager:
             fpath = self.plots_dir / fname
             plt.savefig(fpath, dpi=FIG_DPI)
 
+        plt.show()
 
-def evaluate(mm: ModelManager, save=True, file=None):
+
+def evaluate(mm: ModelManager, dm: DataManager, save=True, file=None):
     if mm.y_pred is None:
         raise ValueError("The model has not predicted any data.")
-    metm = MetricsManager(mm)
+    metm = MetricsManager(mm, dm)
     metm.plot_scatter(save=save, file=file)
     data = metm.compute_metrics().items()
     df = pd.DataFrame(data, columns=["Metric", "Value"])
