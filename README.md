@@ -216,6 +216,7 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 - organized datasets and models storage notebooks
 - compared all models in `6_models.ipynb` and chose 3 winners: Ridge, XGBRegressor and KNN
 - trained and pickled a multilayer perceptron regressor with only the piece values at each square: model `MLPR_100k_rd`
+- created the cross-validation method for the model manager, TODO: document it in notebook 5
 
 ##### 2025-11-27 - Natan Sisoev
 

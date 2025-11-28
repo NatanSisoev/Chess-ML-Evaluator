@@ -3,8 +3,9 @@ import time
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
+from sklearn import clone
 from sklearn.metrics import r2_score, root_mean_squared_error
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GroupKFold, cross_validate
 
 from chess_eval.config import *
 from chess_eval.features import FEATURE_TRANSFORMERS
@@ -325,6 +326,67 @@ class ModelManager:
         df_fen_feats = df_fen.drop(FEN, axis=1, errors="ignore")
 
         return self.model.predict(df_fen_feats)
+
+    def cross_validate(
+            self,
+            dm: DataManager,
+            game_len: int = 100,
+            scoring: str = None,
+            cv: int = 5
+    ) -> pd.DataFrame:
+        """
+        Perform cross-validation while keeping entire games in the same fold.
+
+        Parameters
+        ----------
+        dm : DataManager
+            DataManager instance providing X, y.
+        game_len : int
+            Number of consecutive rows corresponding to a single game.
+        scoring : str or callable
+            Metric for evaluation. Default is Spearman rank correlation.
+        cv : int
+            Number of folds.
+
+        Returns
+        -------
+        pd.DataFrame
+            Data frame with mean/std of train/test scores and mean fit/score times.
+        """
+
+        if dm.features is not None:
+            X = dm.df_all[dm.features]
+        else:
+            X = dm.df_all.drop(columns=[EVAL, FEN])
+        y = dm.df_all[EVAL]
+
+        groups = np.arange(X.shape[0]) // game_len
+
+        if scoring is None:
+            scoring = lambda y_true, y_pred: spearmanr(y_true, y_pred).correlation
+
+        gkf = GroupKFold(n_splits=cv)
+
+        results = cross_validate(
+            clone(self.model),
+            X,
+            y,
+            cv=gkf.split(X, y, groups=groups),
+            scoring=scoring,
+            return_train_score=True,
+            n_jobs=-1,
+        )
+
+        summary = {
+            "train_score_mean": [np.mean(results["train_score"])],
+            "train_score_std": [np.std(results["train_score"])],
+            "test_score_mean": [np.mean(results["test_score"])],
+            "test_score_std": [np.std(results["test_score"])],
+            "train_time_mean": [np.mean(results["fit_time"])],
+            "test_time_mean": [np.mean(results["score_time"])]
+        }
+
+        return pd.DataFrame(summary)
 
 
 class MetricsManager:
