@@ -207,6 +207,14 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 
 ## Changelog
 
+##### 2025-11-28 - Natan Sisoev
+
+- changed ModelManager: removed dm attribute, too much duplicated data (passed by param for fit and test, still saves y_true and y_pred for the metrics manager)
+- updated DataManager: added features attribute to train or test only on a couple of features
+- added a parallelized version to the transformer application method
+- added a check before overwriting a saved dataset/model
+- organized datasets and models storage notebooks
+
 ##### 2025-11-27 - Natan Sisoev
 
 - merge main with improvements
@@ -221,6 +229,7 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 - added easy use `evaluate` function
 - started KNN hyperparameter optimization and plots
 - improved storage listing and display
+- fixed small project errors and warnings
 
 ##### 2025-11-26 - Natan Sisoev
 

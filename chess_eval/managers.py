@@ -9,6 +9,8 @@ from sklearn.model_selection import train_test_split
 from chess_eval.config import *
 from chess_eval.features import FEATURE_TRANSFORMERS
 
+from joblib import Parallel, delayed
+
 
 def clean(df: pd.DataFrame, mode: str = "remove", threshold: int = EVAL_THRESHOLD) -> pd.DataFrame:
     """
@@ -59,6 +61,7 @@ class DataManager:
         random_state: int = RANDOM_STATE,
         cleaner = clean,
         transformers: list | None = FEATURE_TRANSFORMERS,
+        features: list | None = None,
         meta: dict = None,
     ):
         """
@@ -78,17 +81,18 @@ class DataManager:
             Function to clean the dataframe.
         transformers : list
             List of feature transformer objects.
+        features : list
+            List of features for training and testing.
         """
         if meta is None:
             meta = {}
 
         self.filepath        = meta.get("filepath", filepath)
         self.read_size       = meta.get("read_size", read_size)
-        self.sample_size     = meta.get("sample_size", sample_size)
-        self.frac            = meta.get("frac", frac)
         self.test_size       = meta.get("test_size", test_size)
         self.random_state    = meta.get("random_state", random_state)
         self.transformers    = transformers
+        self.features        = features
         self.cleaner         = cleaner if cleaner is not None else lambda x: x
 
         # Load and clean dataset
@@ -96,6 +100,11 @@ class DataManager:
             self.df_all = self.cleaner(pd.read_csv(filepath, nrows=read_size))
         else:
             self.df_all = df
+
+        if meta.get("frac", frac) is not None:
+            self.sample_size = int(meta.get("frac", frac) * len(self.df_all))
+        else:
+            self.sample_size = meta.get("sample_size", sample_size)
 
         # Sampled indices and train/test indices
         self.sample_idx = None
@@ -105,7 +114,7 @@ class DataManager:
         # Sample and optionally apply transformers
         self.sample()
         if self.transformers:
-            self.apply_transformers()
+            self.apply_transformers_parallel()
         self.train_test_split()
 
     @property
@@ -116,6 +125,8 @@ class DataManager:
     @property
     def X(self):
         """Return features dataframe (excluding FEN and EVAL)."""
+        if self.features is not None:
+            return self.df[self.features]
         return self.df.drop(columns=[EVAL, FEN])
 
     @property
@@ -159,21 +170,14 @@ class DataManager:
         pd.DataFrame
             Sampled dataframe.
         """
-        if sample_size:
+        if sample_size is not None:
             self.sample_size = sample_size
-        if frac is not None:
-            self.frac = frac
+        elif frac is not None:
+            self.sample_size = int(frac * len(self.df_all))
 
-        if self.frac is not None:
-            self.sample_idx = self.df_all.sample(
-                frac=self.frac, random_state=self.random_state
-            ).index.to_numpy()
-        else:
-            self.sample_idx = self.df_all.sample(
-                n=self.sample_size, random_state=self.random_state
-            ).index.to_numpy()
-
-        self.sample_size = len(self.sample_idx)
+        self.sample_idx = self.df_all.sample(
+            n=self.sample_size, random_state=self.random_state
+        ).index.to_numpy()
 
         return self.df
 
@@ -206,6 +210,28 @@ class DataManager:
 
         return self.X
 
+    def apply_transformers_parallel(self, transformers=None, n_jobs=-1) -> pd.DataFrame:
+        if transformers is None:
+            transformers = []
+        self.transformers.extend(transformers)
+
+        def apply_one(transformer):
+            missing_features = transformer.features - set(self.X.columns)
+            if missing_features:
+                df_trans = transformer.transform(self.df)
+                return transformer.name, df_trans
+            return transformer.name, None
+
+        results = Parallel(n_jobs=n_jobs)(
+            delayed(apply_one)(t) for t in self.transformers
+        )
+
+        for name, df_transformed in results:
+            if df_transformed is not None:
+                self.df_all.loc[self.sample_idx, df_transformed.columns] = df_transformed.values
+
+        return self.X
+
     def train_test_split(self, features: list = None, test_size: float = None, random_state: int = None):
         """
         Split sampled dataset into training and testing sets.
@@ -229,6 +255,7 @@ class DataManager:
             test_size=test_size or self.test_size,
             random_state=random_state or self.random_state,
         )
+        self.features = features
         return self.X_train, self.X_test, self.y_train, self.y_test
 
 
@@ -238,41 +265,47 @@ class ModelManager:
     and predicting from FEN strings.
     """
 
-    def __init__(self, model, dm: DataManager):
+    def __init__(self, model):
         """
         Parameters
         ----------
         model : sklearn-like estimator
             Model with fit() and predict() methods.
-        dm : DataManager
-            DataManager instance containing train/test splits.
         """
         self.model = model
-        self.dm = dm
+        self.y_true = None
         self.y_pred = None
 
-    def fit(self):
-        """Fit the model on the training dataset."""
-        self.model.fit(self.dm.X_train, self.dm.y_train)
+    def fit(self, dm: DataManager):
+        """
+        Fit the model on the training dataset.
 
-    def predict(self, X: pd.DataFrame = None):
+        Parameters
+        ----------
+        dm : DataManager
+            DataManager instance containing train splits.
+        """
+        self.model.fit(dm.X_train, dm.y_train)
+
+    def predict(self, dm: DataManager):
         """
         Predict target values for provided features or the test set.
 
         Parameters
         ----------
-        X : pd.DataFrame, optional
-            Input features. Defaults to X_test.
+        dm : DataManager
+            DataManager instance containing test splits.
 
         Returns
         -------
         np.ndarray
             Predictions.
         """
-        self.y_pred = self.model.predict(X or self.dm.X_test)
+        self.y_pred = self.model.predict(dm.X_test)
+        self.y_true = dm.y_test
         return self.y_pred
 
-    def predict_fen(self, fen: str):
+    def predict_fen(self, fen: str, transformers: list = FEATURE_TRANSFORMERS):
         """
         Predict evaluation for a single FEN string.
 
@@ -280,6 +313,8 @@ class ModelManager:
         ----------
         fen : str
             Chess position in FEN notation.
+        transformers : list, optional
+            List of transformers to apply.
 
         Returns
         -------
@@ -287,16 +322,12 @@ class ModelManager:
             Predicted evaluation.
         """
         df_fen = pd.DataFrame({FEN: [fen]})
-        for transformer in getattr(self.dm, "transformers", []):
+        for transformer in transformers:
             df_fen = transformer.transform(df_fen)
 
-        X_new = df_fen.drop(FEN, axis=1, errors="ignore")
-        missing_cols = set(self.dm.X_train.columns) - set(X_new.columns)
-        for col in missing_cols:
-            X_new[col] = 0
-        X_new = X_new[self.dm.X_train.columns]
+        df_fen_feats = df_fen.drop(FEN, axis=1, errors="ignore")
 
-        return self.model.predict(X_new)
+        return self.model.predict(df_fen_feats)
 
 
 class MetricsManager:
@@ -304,7 +335,7 @@ class MetricsManager:
     Compute evaluation metrics and provide plotting utilities for predictions.
     """
 
-    def __init__(self, mm, plots_dir=PLOTS_DIR):
+    def __init__(self, mm: ModelManager, plots_dir=PLOTS_DIR):
         """
         Parameters
         ----------
@@ -324,7 +355,7 @@ class MetricsManager:
     @property
     def y_true(self):
         """Return ground truth target values (test set)."""
-        return self.mm.dm.y_test
+        return self.mm.y_true
 
     @property
     def y_pred(self):
@@ -384,13 +415,6 @@ class MetricsManager:
         """Compute R² score."""
         return r2_score(self.y_true, self.y_pred)
 
-    def r2_adjusted(self):
-        """Compute adjusted R² score."""
-        n = len(self.y_true)
-        p = self.mm.dm.X_test.shape[1]
-        r2 = self.r2()
-        return 1 - (1 - r2) * (n - 1) / (n - p - 1)
-
     def spearman_rank_correlation(self):
         """Compute Spearman rank correlation between predictions and true values."""
         return spearmanr(self.y_true, self.y_pred)[0]
@@ -417,7 +441,6 @@ class MetricsManager:
             "Recall (white)": self.sign_recall("white"),
             "Recall (black)": self.sign_recall("black"),
             "R^2": self.r2(),
-            "R^2 adjusted": self.r2_adjusted(),
         }
 
     # --- Plotting Methods ---
@@ -476,7 +499,7 @@ class MetricsManager:
 
 def evaluate(mm: ModelManager, save=True, file=None):
     if mm.y_pred is None:
-        mm.predict()
+        raise ValueError("The model has not predicted any data.")
     metm = MetricsManager(mm)
     metm.plot_scatter(save=save, file=file)
     data = metm.compute_metrics().items()

@@ -44,23 +44,25 @@ class StorageManager:
 
     # -------------------- Dataset Methods --------------------
 
-    def save_dataset(self, dm: DataManager, name: str = None, notes: str = "") -> str:
+    def save_dataset(self, dm: DataManager, name: str = None, notes: str = "", force: bool = False) -> str:
         name = name or datetime.now().strftime("%Y%m%d%H%M%S")
         file_path = os.path.join(self.dataset_dir, f"{name}.pkl")
-
-        # Pickle the entire DataManager
-        with open(file_path, "wb") as f:
-            pickle.dump(dm.df, f, protocol=pickle.HIGHEST_PROTOCOL)  # type: ignore[arg-type]
 
         # Update metadata
         with open(self.dataset_meta_file, "r") as f:
             all_metadata = json.load(f)
 
+        if name in all_metadata and not force:
+            raise ValueError(f"Dataset {name} already exists.")
+
+        # Pickle the entire DataManager
+        with open(file_path, "wb") as f:
+            pickle.dump(dm.df, f, protocol=pickle.HIGHEST_PROTOCOL)  # type: ignore[arg-type]
+
         all_metadata[name] = {
             "name": name,
             "filepath": str(file_path),
             "read_size": dm.read_size,
-            "frac": dm.frac,
             "sample_size": dm.sample_size,
             "test_size": dm.test_size,
             "random_state": dm.random_state,
@@ -99,26 +101,29 @@ class StorageManager:
 
     # -------------------- Model Methods --------------------
 
-    def save_model(self, mm: ModelManager, name: str = None, notes: str = "") -> str:
+    def save_model(self, mm: ModelManager, dm: DataManager, name: str = None, notes: str = "", force: bool = False) -> str:
         name = name or datetime.now().strftime("%Y%m%d%H%M%S")
         file_path = os.path.join(self.model_dir, f"{name}.pkl")
-
-        # Pickle the entire ModelManager
-        with open(file_path, "wb") as f:
-            pickle.dump(mm.model, f, protocol=pickle.HIGHEST_PROTOCOL)  # type: ignore[arg-type]
 
         # Update metadata
         with open(self.model_meta_file, "r") as f:
             all_metadata = json.load(f)
+
+        if name in all_metadata and not force:
+            raise ValueError(f"Model '{name}' already exists.")
+
+        # Pickle the entire ModelManager
+        with open(file_path, "wb") as f:
+            pickle.dump(mm.model, f, protocol=pickle.HIGHEST_PROTOCOL)  # type: ignore[arg-type]
 
         all_metadata[name] = {
             "name": name,
             "filepath": str(file_path),
             "model_class": mm.model.__class__.__name__,
             "parameters": getattr(mm.model, "get_params", lambda: {})(),
-            "training_dataset": str(getattr(mm.dm, "filepath", None)) if mm.dm else None,
-            "features": list(mm.dm.X.columns) if mm.dm else [],
-            "transformers": [t.name for t in mm.dm.transformers] if mm.dm and mm.dm.transformers else [],
+            "training_dataset": str(getattr(dm, "filepath", None)) if dm else None,
+            "features": list(dm.X.columns) if dm else [],
+            "transformers": [t.name for t in dm.transformers] if dm and dm.transformers else [],
             "created_at": datetime.now().isoformat(),
             "notes": notes,
         }
@@ -166,8 +171,7 @@ def load_model(name: str) -> tuple[ModelManager, DataManager]:
     df_name = Path(meta["training_dataset"]).stem
     dm = load_dataset(df_name)
     mm = ModelManager(
-        model=model,
-        dm=dm,
+        model=model
     )
     return mm, dm
 
