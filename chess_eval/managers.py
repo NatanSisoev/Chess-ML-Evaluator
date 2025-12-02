@@ -469,20 +469,17 @@ class MetricsManager:
     """
     Compute evaluation metrics and provide plotting utilities for predictions.
     """
+    plots_dir = PLOTS_DIR
 
-    def __init__(self, mm: ModelManager, dm: DataManager, plots_dir=PLOTS_DIR):
+    def __init__(self, mm: ModelManager, dm: DataManager, ):
         """
         Parameters
         ----------
         mm : ModelManager
             The model manager instance.
-        plots_dir : pathlib.Path
-            Directory to save plots.
         """
         self.mm = mm
         self.dm = dm
-        self.plots_dir = plots_dir
-        self.plots_dir.mkdir(exist_ok=True)
 
         apply_custom_style()
 
@@ -636,7 +633,8 @@ class MetricsManager:
 
         plt.show()
 
-    def plot_gridsearch_results(self, grid: GridSearchCV, log: bool = False, save: bool = False, file: str = None):
+    @classmethod
+    def plot_gridsearch_results(cls, grid: GridSearchCV, log: bool = False, save: bool = False, file: str = None):
         """
         Plot GridSearchCV results.
 
@@ -694,7 +692,7 @@ class MetricsManager:
                 fname = f"grid_{time.strftime('%Y%m%d_%H%M%S')}.png"
             else:
                 fname = f"grid_{file}.png"
-            fpath = self.plots_dir / fname
+            fpath = cls.plots_dir / fname
             plt.savefig(fpath, dpi=FIG_DPI)
 
         plt.show()
