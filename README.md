@@ -96,8 +96,10 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
   - [ ] 4_metric.ipynb
   - [x] 5_cv.ipynb
   - [x] 6_models.ipynb
-  - [ ] 7_hyperparameters.ipynb
-- [x] transform the whole dataset with all features and save it to pkl for easier future access
+  - [x] 7_hyperparameters.ipynb
+- [ ] update folder structure
+- [ ] run notebook 7
+- [ ] save optimal models to storage
 
 ## Features
 
@@ -209,9 +211,19 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 
 ##### 2025-12-02 - Natan Sisoev
 
-- finished cross-validation notebook `5_cv.ipynb`
-- fixed some scoring bugs
-- adapted `6_models.ipynb` to use cross-validation for comparison
+- finished cross-validation
+  - finished notebook `5_cv.ipynb`
+  - fixed some spearman rank scoring bugs
+  - adapted `6_models.ipynb` to use cross-validation for comparison
+  - ran model comparison with cross-validation: 1 hour and 20 minutes
+- started hyperparameter optimization
+  - started the `7_hyperparameters.ipynb` notebook
+  - created `optimize_hyperparameters` method for optimizing hyperparameters
+  - created `plot_gridsearch_results` method for visualizing optimization
+  - created the hyperparameter search grids for al 3 models: Ridge, XGBRegressor and KNN
+  - ran Ridge grid-search
+  - ran KNN grid-search
+- created structure for `save_models.ipynb` (moved all storage-related notebooks to `storage` directory)
 
 ##### 2025-12-01 - Natan Sisoev
 

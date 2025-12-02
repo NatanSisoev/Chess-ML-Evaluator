@@ -3,12 +3,13 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from joblib import Parallel, delayed
 from pandas import DataFrame
 from scipy.stats import spearmanr
 from sklearn import clone
 from sklearn.metrics import r2_score, root_mean_squared_error, make_scorer
-from sklearn.model_selection import train_test_split, GroupKFold, cross_validate
+from sklearn.model_selection import train_test_split, GroupKFold, cross_validate, GridSearchCV
 
 from chess_eval.config import *
 from chess_eval.features import FEATURE_TRANSFORMERS
@@ -324,9 +325,7 @@ class ModelManager:
         for transformer in transformers:
             df_fen = transformer.transform(df_fen)
 
-        df_fen_feats = df_fen.drop(FEN, axis=1, errors="ignore")
-
-        return self.model.predict(df_fen_feats)
+        return self.model.predict(df_fen.drop(FEN, axis=1, errors="ignore"))
 
     def cross_validate(
             self,
@@ -334,7 +333,7 @@ class ModelManager:
             game_len: int = 100,
             games_per_group: int = 10,
             scoring: str = "spearmanr",
-            cv: int = 5
+            n_splits: int = 5
     ) -> tuple[Any, DataFrame]:
         """
         Perform cross-validation while keeping entire games in the same fold.
@@ -349,13 +348,13 @@ class ModelManager:
             Number of consecutive games to sample for each chunk.
         scoring : str or callable
             Metric for evaluation. Default is Spearman rank correlation.
-        cv : int
+        n_splits : int
             Number of folds.
 
         Returns
         -------
-        pd.DataFrame
-            Data frame with mean/std of train/test scores and mean fit/score times.
+        tuple[Any, DataFrame]
+            Full results and summary data frame with mean/std of train/test scores and mean fit/score times.
         """
 
         if dm.features is not None:
@@ -373,7 +372,7 @@ class ModelManager:
             scoring = make_scorer(spearmanr_scorer)
 
         gkf = GroupKFold(
-            n_splits=cv,
+            n_splits=n_splits,
             shuffle=True,
             random_state=dm.random_state,
         )
@@ -398,6 +397,72 @@ class ModelManager:
         }
 
         return results, pd.DataFrame(summary)
+
+    def optimize_hyperparameters(
+            self,
+            dm: DataManager,
+            param_grid: dict,
+            game_len: int = 100,
+            games_per_group: int = 10,
+            scoring: str = "spearmanr",
+            n_splits: int = 5
+    ) -> tuple[GridSearchCV, Any, Any]:
+        """
+        Perform hyperparameter optimization with custom cross-validation.
+
+        Parameters
+        ----------
+        dm : DataManager
+            DataManager instance providing X, y.
+        param_grid : dict
+            A dictionary with all parameters to be optimized and their options.
+        game_len : int
+            Number of consecutive rows corresponding to a single game.
+        games_per_group : int
+            Number of consecutive games to sample for each chunk.
+        scoring : str or callable
+            Metric for evaluation. Default is Spearman rank correlation.
+        n_splits : int
+            Number of folds.
+
+        Returns
+        -------
+        tuple[GridSearchCV, Any, Any]
+            The fitted grid, the best hyperparameter values and their corresponding scores.
+        """
+
+        if dm.features is not None:
+            X = dm.df_all[dm.features]
+        else:
+            X = dm.df_all.drop(columns=[EVAL, FEN])
+        y = dm.df_all[EVAL]
+
+        groups = np.arange(X.shape[0]) // (game_len * games_per_group)
+
+        def spearmanr_scorer(y_true, y_pred):
+            return spearmanr(y_true, y_pred).correlation
+
+        if scoring == "spearmanr":
+            scoring = make_scorer(spearmanr_scorer)
+
+        gkf = GroupKFold(
+            n_splits=n_splits,
+            shuffle=True,
+            random_state=dm.random_state,
+        )
+
+        grid = GridSearchCV(
+            estimator=clone(self.model),
+            param_grid=param_grid,
+            scoring=scoring,
+            cv=gkf,
+            n_jobs=-1,
+            return_train_score=True
+        )
+
+        grid.fit(X, y, groups=groups)
+
+        return grid, grid.best_params_, grid.best_score_
 
 
 class MetricsManager:
@@ -571,8 +636,71 @@ class MetricsManager:
 
         plt.show()
 
+    def plot_gridsearch_results(self, grid: GridSearchCV, log: bool = False, save: bool = False, file: str = None):
+        """
+        Plot GridSearchCV results.
 
-def evaluate(mm: ModelManager, dm: DataManager, save=True, file=None):
+        Parameters
+        ----------
+        grid : GridSearchCV
+            Fitted GridSearchCV object.
+        log : bool
+            Plot x-axis with a logarithmic scale.
+        save : bool
+            Whether to save the plot.
+        file : str
+            Filename to save the plot.
+        """
+        df = pd.DataFrame(grid.cv_results_)
+        params = list(grid.param_grid.keys()) if hasattr(grid, "param_grid") else [c for c in df.columns if
+                                                                                   c.startswith("param_")]
+
+        # 1 parameter: line plot
+        if len(params) == 1:
+            param1 = params[0]
+
+            x = df[f"param_{param1}"]
+            y_test = df["mean_test_score"]
+            y_train = df["mean_train_score"] if "mean_train_score" in df else None
+
+            if log:
+                plt.xscale("log")
+
+            plt.plot(x, y_test, marker="o", label="Test Score")
+            if y_train is not None:
+                plt.plot(x, y_train, marker="x", label="Train Score")
+            plt.xlabel(param1)
+            plt.ylabel("Score")
+            plt.title(f"Score vs {param1}")
+            plt.legend()
+
+        # 2 parameters: heatmap
+        elif len(params) == 2:
+            param1 = params[0]
+            param2 = params[1]
+
+            pivot = df.pivot(index=f"param_{param1}", columns=f"param_{param2}", values="mean_test_score")
+            sns.heatmap(pivot, annot=True, fmt=".4f", cmap="viridis")
+            plt.xlabel(param2)
+            plt.ylabel(param1)
+            plt.title(f"Mean Test Score Heatmap")
+
+        else:
+            raise ValueError("Grid fitted on more than 2 parameters.")
+
+
+        if save:
+            if file is None:
+                fname = f"grid_{time.strftime('%Y%m%d_%H%M%S')}.png"
+            else:
+                fname = f"grid_{file}.png"
+            fpath = self.plots_dir / fname
+            plt.savefig(fpath, dpi=FIG_DPI)
+
+        plt.show()
+
+
+def evaluate(mm: ModelManager, dm: DataManager, save: bool = True, file: str = None):
     if mm.y_pred is None:
         raise ValueError("The model has not predicted any data.")
     metm = MetricsManager(mm, dm)
