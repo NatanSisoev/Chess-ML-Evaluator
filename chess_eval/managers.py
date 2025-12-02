@@ -1,16 +1,17 @@
 import time
+from typing import Any
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
+from pandas import DataFrame
 from scipy.stats import spearmanr
 from sklearn import clone
-from sklearn.metrics import r2_score, root_mean_squared_error
+from sklearn.metrics import r2_score, root_mean_squared_error, make_scorer
 from sklearn.model_selection import train_test_split, GroupKFold, cross_validate
 
 from chess_eval.config import *
 from chess_eval.features import FEATURE_TRANSFORMERS
-
-from joblib import Parallel, delayed
 
 
 def clean(df: pd.DataFrame, mode: str = "remove", threshold: int = EVAL_THRESHOLD) -> pd.DataFrame:
@@ -52,18 +53,18 @@ class DataManager:
     """
 
     def __init__(
-        self,
-        df: pd.DataFrame = None,
-        filepath: str = DATASET_FILE,
-        read_size: int | None = READ_SIZE,
-        sample_size: int | None = SAMPLE_SIZE,
-        frac: float = None,
-        test_size: float = TEST_SIZE,
-        random_state: int = RANDOM_STATE,
-        cleaner = clean,
-        transformers: list | None = FEATURE_TRANSFORMERS,
-        features: list | None = None,
-        meta: dict = None,
+            self,
+            df: pd.DataFrame = None,
+            filepath: str = DATASET_FILE,
+            read_size: int | None = READ_SIZE,
+            sample_size: int | None = SAMPLE_SIZE,
+            frac: float = None,
+            test_size: float = TEST_SIZE,
+            random_state: int = RANDOM_STATE,
+            cleaner=clean,
+            transformers: list | None = FEATURE_TRANSFORMERS,
+            features: list | None = None,
+            meta: dict = None,
     ):
         """
         Parameters
@@ -88,13 +89,13 @@ class DataManager:
         if meta is None:
             meta = {}
 
-        self.filepath        = meta.get("filepath", filepath)
-        self.read_size       = meta.get("read_size", read_size)
-        self.test_size       = meta.get("test_size", test_size)
-        self.random_state    = meta.get("random_state", random_state)
-        self.transformers    = transformers
-        self.features        = features
-        self.cleaner         = cleaner if cleaner is not None else lambda x: x
+        self.filepath = meta.get("filepath", filepath)
+        self.read_size = meta.get("read_size", read_size)
+        self.test_size = meta.get("test_size", test_size)
+        self.random_state = meta.get("random_state", random_state)
+        self.transformers = transformers
+        self.features = features
+        self.cleaner = cleaner if cleaner is not None else lambda x: x
 
         # Load and clean dataset
         if df is None:
@@ -331,9 +332,10 @@ class ModelManager:
             self,
             dm: DataManager,
             game_len: int = 100,
-            scoring: str = None,
+            games_per_group: int = 10,
+            scoring: str = "spearmanr",
             cv: int = 5
-    ) -> pd.DataFrame:
+    ) -> tuple[Any, DataFrame]:
         """
         Perform cross-validation while keeping entire games in the same fold.
 
@@ -343,6 +345,8 @@ class ModelManager:
             DataManager instance providing X, y.
         game_len : int
             Number of consecutive rows corresponding to a single game.
+        games_per_group : int
+            Number of consecutive games to sample for each chunk.
         scoring : str or callable
             Metric for evaluation. Default is Spearman rank correlation.
         cv : int
@@ -360,12 +364,19 @@ class ModelManager:
             X = dm.df_all.drop(columns=[EVAL, FEN])
         y = dm.df_all[EVAL]
 
-        groups = np.arange(X.shape[0]) // game_len
+        groups = np.arange(X.shape[0]) // (game_len * games_per_group)
 
-        if scoring is None:
-            scoring = lambda y_true, y_pred: spearmanr(y_true, y_pred).correlation
+        def spearmanr_scorer(y_true, y_pred):
+            return spearmanr(y_true, y_pred).correlation
 
-        gkf = GroupKFold(n_splits=cv)
+        if scoring == "spearmanr":
+            scoring = make_scorer(spearmanr_scorer)
+
+        gkf = GroupKFold(
+            n_splits=cv,
+            shuffle=True,
+            random_state=dm.random_state,
+        )
 
         results = cross_validate(
             clone(self.model),
@@ -386,7 +397,7 @@ class ModelManager:
             "test_time_mean": [np.mean(results["score_time"])]
         }
 
-        return pd.DataFrame(summary)
+        return results, pd.DataFrame(summary)
 
 
 class MetricsManager:

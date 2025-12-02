@@ -94,7 +94,7 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
   - [x] 2_preprocessing.ipynb
   - [ ] 3_features.ipynb
   - [ ] 4_metric.ipynb
-  - [ ] 5_cv.ipynb
+  - [x] 5_cv.ipynb
   - [x] 6_models.ipynb
   - [ ] 7_hyperparameters.ipynb
 - [x] transform the whole dataset with all features and save it to pkl for easier future access
@@ -206,6 +206,18 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 
 
 ## Changelog
+
+##### 2025-12-02 - Natan Sisoev
+
+- finished cross-validation notebook `5_cv.ipynb`
+- fixed some scoring bugs
+- adapted `6_models.ipynb` to use cross-validation for comparison
+
+##### 2025-12-01 - Natan Sisoev
+
+- started `5_cv.ipynb`
+- considered the stratified version of group k-fold: not really worth it, just group different games
+- finished `1_eda.ipynb`, last section referencing chunked sampling
 
 ##### 2025-11-28 - Natan Sisoev
 
