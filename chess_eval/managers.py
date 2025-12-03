@@ -241,7 +241,7 @@ class DataManager:
 
         Parameters
         ----------
-        features : list, optional  # TODO: add features
+        features : list, optional
             Columns to use for splitting (defaults to all features).
         test_size : float, optional
             Fraction of test set.
@@ -601,7 +601,7 @@ class MetricsManager:
                 fname = f"scatter_{time.strftime('%Y%m%d_%H%M%S')}.png"
             else:
                 fname = f"scatter_{file}.png"
-            fpath = self.plots_dir / fname
+            fpath = numbered_path(self.plots_dir / fname)
             plt.savefig(fpath, dpi=FIG_DPI)
 
         plt.show()
@@ -628,36 +628,43 @@ class MetricsManager:
 
         if save:
             fname = f"tol_acc_{time.strftime('%Y%m%d_%H%M%S')}.png"
-            fpath = self.plots_dir / fname
+            fpath = numbered_path(self.plots_dir / fname)
             plt.savefig(fpath, dpi=FIG_DPI)
 
         plt.show()
 
     @classmethod
-    def plot_gridsearch_results(cls, grid: GridSearchCV, log: bool = False, save: bool = False, file: str = None):
-        """
-        Plot GridSearchCV results.
-
-        Parameters
-        ----------
-        grid : GridSearchCV
-            Fitted GridSearchCV object.
-        log : bool
-            Plot x-axis with a logarithmic scale.
-        save : bool
-            Whether to save the plot.
-        file : str
-            Filename to save the plot.
-        """
+    def plot_gridsearch_results(
+            cls,
+            grid: GridSearchCV,
+            log: bool = False,
+            save: bool = False,
+            file: str = None,
+            params: dict[str, float | None] = None,
+    ):
         df = pd.DataFrame(grid.cv_results_)
-        params = list(grid.param_grid.keys()) if hasattr(grid, "param_grid") else [c for c in df.columns if
-                                                                                   c.startswith("param_")]
+        all_params = list(grid.param_grid.keys())
 
-        # 1 parameter: line plot
-        if len(params) == 1:
-            param1 = params[0]
+        if params is None:
+            params = {p: None for p in all_params}
+        else:
+            missing = set(all_params) - set(params.keys())
+            if missing:
+                raise ValueError(f"params missing keys: {missing}")
 
-            x = df[f"param_{param1}"]
+        free_params = [p for p, v in params.items() if v is None]
+        fixed_params = {p: v for p, v in params.items() if v is not None}
+
+        # Filter rows by fixed parameters
+        for p, val in fixed_params.items():
+            df = df[df[f"param_{p}"] == val]
+        if df.empty:
+            raise ValueError("No grid rows match the fixed parameter values.")
+
+        # 1D case
+        if len(free_params) == 1:
+            p = free_params[0]
+            x = df[f"param_{p}"]
             y_test = df["mean_test_score"]
             y_train = df["mean_train_score"] if "mean_train_score" in df else None
 
@@ -667,32 +674,36 @@ class MetricsManager:
             plt.plot(x, y_test, marker="o", label="Test Score")
             if y_train is not None:
                 plt.plot(x, y_train, marker="x", label="Train Score")
-            plt.xlabel(param1)
+
+            plt.xlabel(p)
             plt.ylabel("Score")
-            plt.title(f"Score vs {param1}")
+            plt.title(f"Score vs {p}")
             plt.legend()
 
-        # 2 parameters: heatmap
-        elif len(params) == 2:
-            param1 = params[0]
-            param2 = params[1]
+        # 2D case
+        elif len(free_params) == 2:
+            p1, p2 = free_params
 
-            pivot = df.pivot(index=f"param_{param1}", columns=f"param_{param2}", values="mean_test_score")
+            pivot = df.pivot(
+                index=f"param_{p1}",
+                columns=f"param_{p2}",
+                values="mean_test_score"
+            )
+
             sns.heatmap(pivot, annot=True, fmt=".4f", cmap="viridis")
-            plt.xlabel(param2)
-            plt.ylabel(param1)
-            plt.title(f"Mean Test Score Heatmap")
+            plt.xlabel(p2)
+            plt.ylabel(p1)
+            plt.title("Mean Test Score Heatmap")
 
         else:
-            raise ValueError("Grid fitted on more than 2 parameters.")
-
+            raise ValueError("Exactly one or two free parameters required.")
 
         if save:
             if file is None:
                 fname = f"grid_{time.strftime('%Y%m%d_%H%M%S')}.png"
             else:
                 fname = f"grid_{file}.png"
-            fpath = cls.plots_dir / fname
+            fpath = numbered_path(cls.plots_dir / fname)
             plt.savefig(fpath, dpi=FIG_DPI)
 
         plt.show()

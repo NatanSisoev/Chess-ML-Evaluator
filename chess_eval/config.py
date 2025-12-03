@@ -1,7 +1,10 @@
 from pathlib import Path
 
 import chess
+import numpy as np  # type: ignore
+import pandas as pd  # type: ignore
 from lightgbm import LGBMRegressor
+from matplotlib import pyplot as plt
 from sklearn.ensemble import (
     RandomForestRegressor,
     GradientBoostingRegressor,
@@ -12,12 +15,8 @@ from sklearn.linear_model import LinearRegression, Lasso, Ridge, ElasticNet
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.svm import SVR
-from xgboost import XGBRegressor
-
 from tqdm import tqdm  # type: ignore
-import numpy as np     # type: ignore
-import pandas as pd    # type: ignore
-from matplotlib import pyplot as plt
+from xgboost import XGBRegressor
 
 # ----------------------------------------------------------------------
 # Paths
@@ -82,6 +81,20 @@ def apply_custom_style():
 
 apply_custom_style()
 
+
+def numbered_path(base: Path) -> Path:
+    stem = base.stem
+    ext = base.suffix
+    parent = base.parent
+
+    k = 1
+    candidate = base
+    while candidate.exists():
+        candidate = parent / f"{stem}_{k}{ext}"
+        k += 1
+    return candidate
+
+
 # ----------------------------------------------------------------------
 # Model registry
 # ----------------------------------------------------------------------
@@ -100,4 +113,28 @@ MODELS = {
     "LGBMRegressor": LGBMRegressor,
     "SVR": SVR,
     "MLPRegressor": MLPRegressor,
+}
+
+# ----------------------------------------------------------------------
+# Optimized models' parameters
+# ----------------------------------------------------------------------
+
+OPTIMAL_MODELS = {
+    "KNeighborsRegressor": KNeighborsRegressor,
+    "Ridge": Ridge,
+    "XGBRegressor": XGBRegressor,
+}
+
+OPTIMAL_PARAMS = {
+    "Ridge": {
+        "alpha": 100,
+    },
+    "XGBRegressor": {
+        "max_depth": 7,
+        "n_estimators": 3000,
+        "learning_rate": 0.05,
+    },
+    "KNeighborsRegressor": {
+        "n_neighbors": 50,
+    },
 }
