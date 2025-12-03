@@ -101,7 +101,7 @@ class StorageManager:
 
     # -------------------- Model Methods --------------------
 
-    def save_model(self, mm: ModelManager, dm: DataManager, name: str = None, notes: str = "", force: bool = False) -> str:
+    def save_model(self, mm: ModelManager, dm: DataManager, name: str = None, notes: str = "", force: bool = False, skip: bool = False) -> str:
         name = name or datetime.now().strftime("%Y%m%d%H%M%S")
         file_path = os.path.join(self.model_dir, f"{name}.pkl")
 
@@ -110,6 +110,8 @@ class StorageManager:
             all_metadata = json.load(f)
 
         if (name in all_metadata) and not force:
+            if skip:
+                return "Skipped"
             raise ValueError(f"Model '{name}' already exists.")
 
         # Pickle the entire ModelManager

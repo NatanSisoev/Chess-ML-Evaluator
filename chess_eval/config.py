@@ -138,3 +138,9 @@ OPTIMAL_PARAMS = {
         "n_neighbors": 50,
     },
 }
+
+ABBREVIATIONS = {
+    "KNeighborsRegressor": "knn",
+    "Ridge": "rdg",
+    "XGBRegressor": "xgb",
+}

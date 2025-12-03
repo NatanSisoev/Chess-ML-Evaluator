@@ -97,8 +97,9 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
   - [x] 5_cv.ipynb
   - [x] 6_models.ipynb
   - [x] 7_hyperparameters.ipynb
+  - [ ] 8_testing.ipynb
 - [ ] update folder structure
-- [ ] run notebook 7
+- [x] run notebook 7
 - [ ] save optimal models to storage
 
 ## Features
@@ -215,6 +216,10 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 - improved grid search plotting
 - saved hyperparameter optimization results to `config.py`
 - filtered, renamed, organized, and saved result plots
+- created for loop to save all optimized models for all dataframes
+- created `four_full_rd` dataframe and fitted XGBRegressor with best params on it -> `xgb_four_full_rd`
+- saved and timed the dataframes from `save_datasets.ipynb`
+- saved and timed the model from `save_models.ipynb`
 
 ##### 2025-12-02 - Natan Sisoev
 
