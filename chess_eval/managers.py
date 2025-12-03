@@ -641,6 +641,7 @@ class MetricsManager:
             save: bool = False,
             file: str = None,
             params: dict[str, float | None] = None,
+            show_train: bool = True,
     ):
         df = pd.DataFrame(grid.cv_results_)
         all_params = list(grid.param_grid.keys())
@@ -672,7 +673,7 @@ class MetricsManager:
                 plt.xscale("log")
 
             plt.plot(x, y_test, marker="o", label="Test Score")
-            if y_train is not None:
+            if y_train is not None and show_train:
                 plt.plot(x, y_train, marker="x", label="Train Score")
 
             plt.xlabel(p)

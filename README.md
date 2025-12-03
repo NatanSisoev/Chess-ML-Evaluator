@@ -214,7 +214,7 @@ kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
 - improved hyperparameter optimization: removed staged optimization for XGBR and refined values for Ridge and KNN
 - improved grid search plotting
 - saved hyperparameter optimization results to `config.py`
-- 
+- filtered, renamed, organized, and saved result plots
 
 ##### 2025-12-02 - Natan Sisoev
 
