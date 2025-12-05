@@ -8,7 +8,7 @@ import seaborn as sns
 from joblib import Parallel, delayed
 from scipy.stats import spearmanr
 from sklearn import clone
-from sklearn.metrics import r2_score, mean_squared_error, make_scorer
+from sklearn.metrics import r2_score, root_mean_squared_error, make_scorer
 from sklearn.model_selection import train_test_split, GroupKFold, cross_validate, GridSearchCV
 
 from chess_eval.config import *
@@ -71,9 +71,11 @@ class DataManager:
             df: Optional[pd.DataFrame] = None,
             filepath: str = DATASET_FILE,
             read_size: Optional[int] = READ_SIZE,
+            skiprows: Optional[int] = SKIP_ROWS,
             sample_size: Optional[int] = SAMPLE_SIZE,
             frac: Optional[float] = None,
             test_size: float = TEST_SIZE,
+            downcast: bool = True,
             random_state: int = RANDOM_STATE,
             cleaner: Callable[[pd.DataFrame], pd.DataFrame] | None = clean,
             transformers=None,
@@ -89,12 +91,16 @@ class DataManager:
             Path to CSV dataset.
         read_size : int, optional
             Number of rows to read from CSV.
+        skiprows : int, optional
+            Number of rows to skip before reading from CSV.
         sample_size : int, optional
             Number of rows to sample for train/test split.
         frac : float, optional
             Fraction of dataset to sample.
         test_size : float, default TEST_SIZE
             Fraction of test set.
+        downcast : bool, default True
+            Whether to downcast all features to integer or not.
         random_state : int, default RANDOM_STATE
             Random seed.
         cleaner : Callable, default clean
@@ -111,16 +117,19 @@ class DataManager:
         if meta is None:
             meta = {}
 
+        self.meta = meta
         self.filepath = meta.get("filepath", filepath)
         self.read_size = meta.get("read_size", read_size)
+        self.skiprows = meta.get("skiprows", skiprows)
         self.test_size = meta.get("test_size", test_size)
+        self.downcast = meta.get("downcast", downcast)
         self.random_state = meta.get("random_state", random_state)
         self.transformers = transformers
         self.features = features
         self.cleaner = cleaner if cleaner is not None else lambda x: x
 
         if df is None:
-            self.df_all = self.cleaner(pd.read_csv(filepath, nrows=read_size))
+            self.df_all = self.cleaner(pd.read_csv(filepath, nrows=read_size, skiprows=list(range(1, skiprows))))
         else:
             self.df_all = df
 
@@ -143,12 +152,17 @@ class DataManager:
         """Return sampled dataframe."""
         return self.df_all.loc[self.sample_idx].reset_index(drop=True)
 
+    @df.setter
+    def df(self, new_df: pd.DataFrame):
+        """Update the sampled rows in df_all with new_df."""
+        self.df_all.loc[self.sample_idx, new_df.columns] = new_df.values
+
     @property
     def X(self) -> pd.DataFrame:
         """Return features dataframe (excluding EVAL and FEN)."""
         if self.features is not None:
             return self.df[self.features]
-        return self.df.drop(columns=[EVAL, FEN])
+        return self.df.drop(columns=[EVAL, FEN, MOVE], errors="ignore")
 
     @property
     def y(self) -> pd.Series:
@@ -225,6 +239,15 @@ class DataManager:
                 df_transformed = transformer.transform(self.df)
                 self.df_all.loc[self.sample_idx, df_transformed.columns] = df_transformed.values
 
+        self.df_all.fillna(0, inplace=True)  # rows that are not sampled
+        for col in self.df_all.columns:
+            if col not in [FEN, EVAL, MOVE, "Phase"]:
+                col_vals = self.df_all[col].values
+                if np.min(col_vals) >= -128 and np.max(col_vals) <= 127:
+                    self.df_all[col] = col_vals.astype("int8")
+                else:
+                    self.df_all[col] = col_vals.astype("int16")
+
         return self.X
 
     def apply_transformers_parallel(self, transformers: Optional[List] = None, n_jobs: int = -1) -> pd.DataFrame:
@@ -261,6 +284,17 @@ class DataManager:
         for name, df_transformed in results:
             if df_transformed is not None:
                 self.df_all.loc[self.sample_idx, df_transformed.columns] = df_transformed.values
+
+        self.df_all.fillna(0, inplace=True)  # rows that are not sampled
+
+        if self.downcast:
+            for col in self.df_all.columns:
+                if col not in [FEN, EVAL, MOVE, "Phase"]:
+                    col_vals = self.df_all[col].values
+                    if np.min(col_vals) >= -128 and np.max(col_vals) <= 127:
+                        self.df_all[col] = col_vals.astype("int8")
+                    else:
+                        self.df_all[col] = col_vals.astype("int16")
 
         return self.X
 
@@ -565,7 +599,7 @@ class MetricsManager:
         return {
             "Spearman Rank": self.spearman_rank_correlation(),
             f"Accuracy (±{tol})": self.centipawn_accuracy(tol),
-            "RMSE": mean_squared_error(self.y_true, self.y_pred, squared=False),
+            "RMSE": root_mean_squared_error(self.y_true, self.y_pred),
             "Accuracy (sign)": self.sign_accuracy(),
             "Recall (white)": self.sign_recall("white"),
             "Recall (black)": self.sign_recall("black"),
@@ -950,7 +984,7 @@ class StorageManager:
         return df
 
 
-def load_dataset(name: str) -> DataManager:
+def load_dataset(name: str, downcast: bool = True) -> DataManager:
     """
     Load a dataset from storage into a DataManager object.
 
@@ -958,6 +992,8 @@ def load_dataset(name: str) -> DataManager:
     ----------
     name : str
         Name of the dataset to load.
+    downcast : bool, default True
+        Whether to downcast all features to integer or not.
 
     Returns
     -------
@@ -970,11 +1006,12 @@ def load_dataset(name: str) -> DataManager:
         df=df,
         meta=meta,
         transformers=None,
+        downcast=downcast,
     )
     return dm
 
 
-def load_model(name: str) -> Tuple[ModelManager, DataManager]:
+def load_model(name: str, dm: bool = True) -> Tuple[ModelManager, DataManager] | Tuple[ModelManager, None]:
     """
     Load a model and its associated dataset from storage.
 
@@ -982,18 +1019,22 @@ def load_model(name: str) -> Tuple[ModelManager, DataManager]:
     ----------
     name : str
         Name of the model to load.
+    dm : bool, default True
+        Whether to load the related dataset or not.
 
     Returns
     -------
-    tuple[ModelManager, DataManager]
-        Loaded ModelManager and associated DataManager.
+    tuple[ModelManager, DataManager]] | Tuple[ModelManager, None]
+        Loaded ModelManager and associated DataManager (if applicable).
     """
     sm = StorageManager()
     model, meta = sm.load_model(name)
-    df_path = Path(meta["training_dataset"])
-    dm = load_dataset(df_path.stem)
     mm = ModelManager(model=model)
-    return mm, dm
+    if dm:
+        df_path = Path(meta["training_dataset"])
+        dm = load_dataset(df_path.stem)
+        return mm, dm
+    return mm, None
 
 
 def evaluate(mm: ModelManager, dm: DataManager, save: bool = True, file: Optional[str] = None) -> pd.DataFrame:

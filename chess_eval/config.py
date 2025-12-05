@@ -32,6 +32,8 @@ ROOT_DIR: Path = Path(__file__).resolve().parent.parent
 DATA_DIR: Path = ROOT_DIR / "data"
 PLOTS_DIR: Path = ROOT_DIR / "plots"
 DATASET_FILE: Path = DATA_DIR / "raw" / "chessData.csv"
+DATASET_RANDOM_FILE: Path = DATA_DIR / "raw" / "random_evals.csv"
+DATASET_TACTICS_FILE: Path = DATA_DIR / "raw" / "tactic_evals.csv"
 SAVED_DATASETS_DIR: Path = DATA_DIR / "features"
 SAVED_MODELS_DIR: Path = ROOT_DIR / "models"
 
@@ -41,8 +43,11 @@ SAVED_MODELS_DIR: Path = ROOT_DIR / "models"
 
 FEN: str = "FEN"
 EVAL: str = "Evaluation"
+MOVE: str = "Move"
 
+DATASET_SIZE: int = 12954834
 READ_SIZE: int = 100_000
+SKIP_ROWS: int = 0
 SAMPLE_SIZE: int = 1_000
 EVAL_THRESHOLD: int = 1000
 FIG_DPI: int = 300

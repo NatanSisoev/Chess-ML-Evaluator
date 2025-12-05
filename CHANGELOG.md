@@ -6,7 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- TODO: notebooks 3 and 4
+- TODO: run datasets (with downcast) and train and save models
+
+---
+
+## [2025-12-05] - Natan Sisoev
+
+- optimized dataset storage: `float64` (8 bytes) -> `int8` (1 byte), so around 8 times smaller pickled datasets
+- implemented default downcast
+- updated storage files and managers
+- feature importance analysis for `8_testing.ipynb`
 
 ---
 
@@ -14,6 +23,10 @@ All notable changes to this project will be documented in this file.
 
 - documented whole `chess_eval` scripts with docstrings and type-hinting
 - improved `README.md` and created this `CHANGELOG.md`
+- tested the best model on `random_evals.csv`
+- implemented incremental learning on all data from `chessData.csv`
+
+---
 
 ## [2025-12-03] - Natan Sisoev
 
