@@ -10,6 +10,14 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [2025-12-06] - Natan Sisoev
+
+- finished `save_datasets.ipynb` and `save_models.ipynb` with optimized versions
+- ran storage notebooks and saved fitted models
+- ran final notebooks `8_testing.ipynb`
+
+---
+
 ## [2025-12-05] - Natan Sisoev
 
 - optimized dataset storage: `float64` (8 bytes) -> `int8` (1 byte), so around 8 times smaller pickled datasets
