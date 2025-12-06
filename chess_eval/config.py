@@ -124,7 +124,6 @@ MODELS: Dict[str, Type] = {
 }
 
 OPTIMAL_MODELS: Dict[str, Type] = {
-    "KNeighborsRegressor": KNeighborsRegressor,
     "Ridge": Ridge,
     "XGBRegressor": XGBRegressor,
 }
@@ -137,14 +136,10 @@ OPTIMAL_PARAMS: Dict[str, Dict[str, Any]] = {
         "max_depth": 7,
         "n_estimators": 3000,
         "learning_rate": 0.05,
-    },
-    "KNeighborsRegressor": {
-        "n_neighbors": 50,
-    },
+    }
 }
 
 ABBREVIATIONS: Dict[str, str] = {
-    "KNeighborsRegressor": "knn",
     "Ridge": "rdg",
     "XGBRegressor": "xgb",
 }
