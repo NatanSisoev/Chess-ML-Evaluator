@@ -703,7 +703,7 @@ class BoardControl(FeatureBundle):
     name = "Board Control"
     features = {
         "Central_Squares_Control_White", "Central_Squares_Control_Black",
-        "Open_Columns_White", "Open_Columns_Black",
+        "Open_Columns",
         "SemiOpen_Columns_White", "SemiOpen_Columns_Black",
         "Rook_on_Open_Column_White", "Rook_on_Open_Column_Black",
         "Protected_Advanced_Pawn_White", "Protected_Advanced_Pawn_Black",
@@ -815,18 +815,19 @@ class BoardControl(FeatureBundle):
         cols = BoardControl._open_columns(board)
         out: Dict[str, int] = {}
 
+        # Count open columns once (not color-specific)
+        open_c = sum(1 for has_w, has_b in cols if not has_w and not has_b)
+        out["Open_Columns"] = open_c
+
         for color, cname in [(chess.WHITE, "White"), (chess.BLACK, "Black")]:
             out[f"Central_Squares_Control_{cname}"] = sum(1 for sq in BoardControl.central if board.is_attacked_by(color, sq))
-            open_c = semi_c = 0
+            
+            semi_c = 0
             for f, (has_w, has_b) in enumerate(cols):
-                if not has_w and not has_b:
-                    open_c += 1
-                else:
-                    if color == chess.WHITE and not has_w:
-                        semi_c += 1
-                    elif color == chess.BLACK and not has_b:
-                        semi_c += 1
-            out[f"Open_Columns_{cname}"] = open_c
+                if color == chess.WHITE and not has_w and has_b:
+                    semi_c += 1
+                elif color == chess.BLACK and not has_b and has_w:
+                    semi_c += 1
             out[f"SemiOpen_Columns_{cname}"] = semi_c
 
             rook_flag = 0

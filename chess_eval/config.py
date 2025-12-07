@@ -86,6 +86,10 @@ def apply_custom_style() -> None:
         "ytick.color": "black",
         "text.color": "black",
         "font.weight": "bold",
+            
+        "text.usetex": False,   # Disable LaTeX
+        "mathtext.fontset": "dejavusans",
+        "font.family": "sans-serif",
     })
 
 
