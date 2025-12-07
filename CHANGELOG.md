@@ -8,23 +8,20 @@ All notable changes to this project will be documented in this file.
 
 - TODO: run datasets (with downcast) and train and save models
 
+
+[2025-12-07] - Ferran Villarta
+
 ## [2025-12-07] - Ferran Villarta
-- finished notebook `3_features.ipynb`
-- finished notebook `4_metrics.ipynb`
-- updated chess_eval folder:
-  - `config.py`: added to execute the notebooks without latex in plt.style
-      "text.usetex": False,
-      "mathtext.fontset": "dejavusans",
-      "font.family": "sans-serif",
-  - `features.py`: deleted "Open_Columns_White", "Open_Columns_Black" as they were exactly the same -> Open_Columns (81 features now)
-  - `manager.py`: modified lines 240 and 287,to assign each column individually instead of all at once, which avoids the dtype compatibility warning. 
-    from this:
-      self.df_all.loc[self.sample_idx, df_transformed.columns] = df_transformed.values 
-    to this:
-      for col in df_transformed.columns: # assigns each column individually instead of all at once, which avoids the dtype compatibility warning
-                    self.df_all.loc[self.sample_idx, col] = df_transformed[col].values
-
-
+- modified `chess_eval/managers.py`:
+  - `StorageManager.save_model` and `load_model` updated to use `"filename"` instead of full `"filepath"`
+  - `"training_dataset"` now stores dataset name only instead of absolute path
+  - adjusted metadata handling for compatibility with updated `DataManager` and `ModelManager`  
+- new file `models/import_json.py`:
+  - script to clean and convert old `metadata.json` entries to new format
+  - removes absolute paths, preserves other metadata fields  
+- modified `models/metadata.json`:
+  - all models updated to use new `"filename"` and dataset name format
+  - removed absolute paths for portability
 
 ---
 

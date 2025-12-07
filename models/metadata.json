@@ -1,7 +1,6 @@
 {
   "gbr_one": {
     "name": "gbr_one",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\gbr_one.pkl",
     "model_class": "GradientBoostingRegressor",
     "parameters": {
       "alpha": 0.9,
@@ -26,7 +25,7 @@
       "verbose": 0,
       "warm_start": false
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one.pkl",
+    "training_dataset": "one",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -113,11 +112,11 @@
     ],
     "transformers": [],
     "created_at": "2025-11-28T15:01:08.190396",
-    "notes": ""
+    "notes": "",
+    "filename": "gbr_one.pkl"
   },
   "mlp_one": {
     "name": "mlp_one",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\mlp_one.pkl",
     "model_class": "MLPRegressor",
     "parameters": {
       "activation": "relu",
@@ -147,7 +146,7 @@
       "verbose": false,
       "warm_start": false
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one.pkl",
+    "training_dataset": "one",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -234,11 +233,11 @@
     ],
     "transformers": [],
     "created_at": "2025-11-28T15:43:15.652244",
-    "notes": ""
+    "notes": "",
+    "filename": "mlp_one.pkl"
   },
   "rdg_one": {
     "name": "rdg_one",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\rdg_one.pkl",
     "model_class": "Ridge",
     "parameters": {
       "alpha": 100,
@@ -250,7 +249,7 @@
       "solver": "auto",
       "tol": 0.0001
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one.pkl",
+    "training_dataset": "one",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -345,11 +344,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T12:36:25.925756",
-    "notes": ""
+    "notes": "",
+    "filename": "rdg_one.pkl"
   },
   "rdg_one_full": {
     "name": "rdg_one_full",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\rdg_one_full.pkl",
     "model_class": "Ridge",
     "parameters": {
       "alpha": 100,
@@ -361,7 +360,7 @@
       "solver": "auto",
       "tol": 0.0001
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one_full.pkl",
+    "training_dataset": "one_full",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -456,11 +455,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T12:36:48.072253",
-    "notes": ""
+    "notes": "",
+    "filename": "rdg_one_full.pkl"
   },
   "rdg_one_full_rd": {
     "name": "rdg_one_full_rd",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\rdg_one_full_rd.pkl",
     "model_class": "Ridge",
     "parameters": {
       "alpha": 100,
@@ -472,7 +471,7 @@
       "solver": "auto",
       "tol": 0.0001
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one_full_rd.pkl",
+    "training_dataset": "one_full_rd",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -567,11 +566,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T12:38:25.757355",
-    "notes": ""
+    "notes": "",
+    "filename": "rdg_one_full_rd.pkl"
   },
   "xgb_one": {
     "name": "xgb_one",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\xgb_one.pkl",
     "model_class": "XGBRegressor",
     "parameters": {
       "objective": "reg:squarederror",
@@ -615,7 +614,7 @@
       "validate_parameters": null,
       "verbosity": null
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one.pkl",
+    "training_dataset": "one",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -710,11 +709,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T12:36:39.315158",
-    "notes": ""
+    "notes": "",
+    "filename": "xgb_one.pkl"
   },
   "xgb_one_full": {
     "name": "xgb_one_full",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\xgb_one_full.pkl",
     "model_class": "XGBRegressor",
     "parameters": {
       "objective": "reg:squarederror",
@@ -758,7 +757,7 @@
       "validate_parameters": null,
       "verbosity": null
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one_full.pkl",
+    "training_dataset": "one_full",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -853,11 +852,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T12:38:11.308100",
-    "notes": ""
+    "notes": "",
+    "filename": "xgb_one_full.pkl"
   },
   "xgb_one_full_rd": {
     "name": "xgb_one_full_rd",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\xgb_one_full_rd.pkl",
     "model_class": "XGBRegressor",
     "parameters": {
       "objective": "reg:squarederror",
@@ -901,7 +900,7 @@
       "validate_parameters": null,
       "verbosity": null
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one_full_rd.pkl",
+    "training_dataset": "one_full_rd",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -996,11 +995,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T12:39:58.937757",
-    "notes": ""
+    "notes": "",
+    "filename": "xgb_one_full_rd.pkl"
   },
   "xgb_four_full_rd": {
     "name": "xgb_four_full_rd",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\xgb_four_full_rd.pkl",
     "model_class": "XGBRegressor",
     "parameters": {
       "objective": "reg:squarederror",
@@ -1044,7 +1043,7 @@
       "validate_parameters": null,
       "verbosity": null
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\four_full_rd.pkl",
+    "training_dataset": "four_full_rd",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -1139,11 +1138,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T12:48:35.393166",
-    "notes": ""
+    "notes": "",
+    "filename": "xgb_four_full_rd.pkl"
   },
   "rdg_four_full_rd": {
     "name": "rdg_four_full_rd",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\rdg_four_full_rd.pkl",
     "model_class": "Ridge",
     "parameters": {
       "alpha": 100,
@@ -1155,7 +1154,7 @@
       "solver": "auto",
       "tol": 0.0001
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\four_full_rd.pkl",
+    "training_dataset": "four_full_rd",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -1250,11 +1249,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T12:41:17.336276",
-    "notes": ""
+    "notes": "",
+    "filename": "rdg_four_full_rd.pkl"
   },
   "rdg_one_full_rd_skip": {
     "name": "rdg_one_full_rd_skip",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\rdg_one_full_rd_skip.pkl",
     "model_class": "Ridge",
     "parameters": {
       "alpha": 100,
@@ -1266,7 +1265,7 @@
       "solver": "auto",
       "tol": 0.0001
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one_full_rd_skip.pkl",
+    "training_dataset": "one_full_rd_skip",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -1361,11 +1360,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T16:27:28.609459",
-    "notes": ""
+    "notes": "",
+    "filename": "rdg_one_full_rd_skip.pkl"
   },
   "xgb_one_full_rd_skip": {
     "name": "xgb_one_full_rd_skip",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\xgb_one_full_rd_skip.pkl",
     "model_class": "XGBRegressor",
     "parameters": {
       "objective": "reg:squarederror",
@@ -1409,7 +1408,7 @@
       "validate_parameters": null,
       "verbosity": null
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\one_full_rd_skip.pkl",
+    "training_dataset": "one_full_rd_skip",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -1504,11 +1503,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T16:29:11.415289",
-    "notes": ""
+    "notes": "",
+    "filename": "xgb_one_full_rd_skip.pkl"
   },
   "rdg_four_full_rd_skip": {
     "name": "rdg_four_full_rd_skip",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\rdg_four_full_rd_skip.pkl",
     "model_class": "Ridge",
     "parameters": {
       "alpha": 100,
@@ -1520,7 +1519,7 @@
       "solver": "auto",
       "tol": 0.0001
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\four_full_rd_skip.pkl",
+    "training_dataset": "four_full_rd_skip",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -1615,11 +1614,11 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T16:30:45.949549",
-    "notes": ""
+    "notes": "",
+    "filename": "rdg_four_full_rd_skip.pkl"
   },
   "xgb_four_full_rd_skip": {
     "name": "xgb_four_full_rd_skip",
-    "filepath": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\models\\xgb_four_full_rd_skip.pkl",
     "model_class": "XGBRegressor",
     "parameters": {
       "objective": "reg:squarederror",
@@ -1663,7 +1662,7 @@
       "validate_parameters": null,
       "verbosity": null
     },
-    "training_dataset": "C:\\Users\\natan\\MatCAD\\3\\3.1\\Aprenentatge Computacional\\Chess Evaluations\\data\\features\\four_full_rd_skip.pkl",
+    "training_dataset": "four_full_rd_skip",
     "features": [
       "White_Pieces",
       "Black_Pieces",
@@ -1758,6 +1757,7 @@
       "Game Info"
     ],
     "created_at": "2025-12-06T16:39:15.576810",
-    "notes": ""
+    "notes": "",
+    "filename": "xgb_four_full_rd_skip.pkl"
   }
 }

@@ -118,7 +118,7 @@ class DataManager:
             meta = {}
 
         self.meta = meta
-        self.filepath = meta.get("filepath", filepath)
+        self.filepath = filepath  # metadata should NOT override this
         self.read_size = meta.get("read_size", read_size)
         self.skiprows = meta.get("skiprows", skiprows)
         self.test_size = meta.get("test_size", test_size)
@@ -129,9 +129,14 @@ class DataManager:
         self.cleaner = cleaner if cleaner is not None else lambda x: x
 
         if df is None:
-            self.df_all = self.cleaner(pd.read_csv(filepath, nrows=read_size, skiprows=list(range(1, skiprows))))
+            # Only raw-load from CSV if no DataFrame was provided
+            self.df_all = self.cleaner(pd.read_csv(self.filepath, nrows=self.read_size,
+                                                skiprows=list(range(1, self.skiprows))))
         else:
+            # Loaded dataset → do NOT use CSV path at all
             self.df_all = df
+            self.filepath = None     # make it clear this is not a CSV-based dataset
+
 
         if meta.get("frac", frac) is not None:
             self.sample_size = int(meta.get("frac", frac) * len(self.df_all))
@@ -827,7 +832,7 @@ class StorageManager:
 
         all_metadata[name] = {
             "name": name,
-            "filepath": str(file_path),
+            "filename": f"{name}.pkl",
             "read_size": dm.read_size,
             "sample_size": dm.sample_size,
             "test_size": dm.test_size,
@@ -861,7 +866,9 @@ class StorageManager:
             raise KeyError(f"No dataset found for '{name}'")
 
         meta: dict = all_metadata[name]
-        with Path(meta["filepath"]).open("rb") as f:
+        path = self.dataset_dir / meta["filename"]
+        with path.open("rb") as f:
+
             df: pd.DataFrame = pickle.load(f)
 
         return df, meta
@@ -930,10 +937,10 @@ class StorageManager:
 
         all_metadata[name] = {
             "name": name,
-            "filepath": str(file_path),
+            "filename": f"{name}.pkl",
             "model_class": mm.model.__class__.__name__,
             "parameters": getattr(mm.model, "get_params", lambda: {})(),
-            "training_dataset": str(getattr(dm, "filepath", None)) if dm else None,
+            "training_dataset": dm.name if dm else None,
             "features": list(dm.X.columns) if dm else [],
             "transformers": [t.name for t in dm.transformers] if dm and dm.transformers else [],
             "created_at": datetime.now().isoformat(),
@@ -962,7 +969,8 @@ class StorageManager:
             raise KeyError(f"No model found for '{name}'")
 
         meta: dict = all_metadata[name]
-        with Path(meta["filepath"]).open("rb") as f:
+        path = self.model_dir / meta["filename"]
+        with path.open("rb") as f:
             model = pickle.load(f)
 
         return model, meta
@@ -978,7 +986,7 @@ class StorageManager:
         """
         all_metadata: dict = json.loads(self.model_meta_file.read_text())
         data = [
-            (name, meta.get("model_class"), Path(meta.get("training_dataset")).stem, meta.get("notes"))
+            (name, meta.get("model_class"), meta.get("training_dataset"), meta.get("notes"))
             for name, meta in all_metadata.items()
         ]
         df = pd.DataFrame(data, columns=["Name", "Model", "Dataset", "Notes"])
@@ -1033,8 +1041,9 @@ def load_model(name: str, dm: bool = True) -> Tuple[ModelManager, DataManager] |
     model, meta = sm.load_model(name)
     mm = ModelManager(model=model)
     if dm:
-        df_path = Path(meta["training_dataset"])
-        dm = load_dataset(df_path.stem)
+        dataset_path = Path(meta["training_dataset"])
+        dataset_name = dataset_path.stem  # <-- extract "one" from ".../one.pkl"
+        dm = load_dataset(dataset_name)
         return mm, dm
     return mm, None
 
