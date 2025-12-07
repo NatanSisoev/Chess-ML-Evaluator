@@ -237,7 +237,7 @@ class DataManager:
             missing_features = transformer.features - set(self.X.columns)
             if missing_features:
                 df_transformed = transformer.transform(self.df)
-                for col in df_transformed.columns:
+                for col in df_transformed.columns: # assigns each column individually instead of all at once, which avoids the dtype compatibility warning
                     self.df_all.loc[self.sample_idx, col] = df_transformed[col].values
 
         self.df_all.fillna(0, inplace=True)  # rows that are not sampled

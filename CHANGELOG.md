@@ -8,6 +8,24 @@ All notable changes to this project will be documented in this file.
 
 - TODO: run datasets (with downcast) and train and save models
 
+## [2025-12-07] - Ferran Villarta
+- finished notebook `3_features.ipynb`
+- finished notebook `4_metrics.ipynb`
+- updated chess_eval folder:
+  - `config.py`: added to execute the notebooks without latex in plt.style
+      "text.usetex": False,
+      "mathtext.fontset": "dejavusans",
+      "font.family": "sans-serif",
+  - `features.py`: deleted "Open_Columns_White", "Open_Columns_Black" as they were exactly the same -> Open_Columns (81 features now)
+  - `manager.py`: modified lines 240 and 287,to assign each column individually instead of all at once, which avoids the dtype compatibility warning. 
+    from this:
+      self.df_all.loc[self.sample_idx, df_transformed.columns] = df_transformed.values 
+    to this:
+      for col in df_transformed.columns: # assigns each column individually instead of all at once, which avoids the dtype compatibility warning
+                    self.df_all.loc[self.sample_idx, col] = df_transformed[col].values
+
+
+
 ---
 
 ## [2025-12-06] - Natan Sisoev
