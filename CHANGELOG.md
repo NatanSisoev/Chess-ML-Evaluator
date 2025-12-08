@@ -4,17 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [Unreleased]
 
-- TODO: run datasets (with downcast) and train and save models
+## [2025-12-06] - Natan Sisoev
 
+- small fixes, saved all notebook output plots to plots/notebooks_output directory
+- finished report and presentation and added to docs/
+- added GitHub repo button to README.md
 
-[2025-12-07] - Ferran Villarta
+---
 
 ## [2025-12-07] - Ferran Villarta
 - modified `chess_eval/managers.py`:
   - `StorageManager.save_model` and `load_model` updated to use `"filename"` instead of full `"filepath"`
-  - `"training_dataset"` now stores dataset name only instead of absolute path
+  - `"training_dataset"` now stores dataset name only instead of the absolute path
   - adjusted metadata handling for compatibility with updated `DataManager` and `ModelManager`  
 - new file `models/import_json.py`:
   - script to clean and convert old `metadata.json` entries to new format

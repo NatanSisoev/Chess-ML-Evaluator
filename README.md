@@ -1,5 +1,7 @@
 # Chess-ML-Evaluator
 
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/NatanSisoev/Chess-ML-Evaluator)
+
 A machine-learning-based chess position evaluator. This project extracts features from chess positions in FEN format and trains models to predict position evaluations.
 
 ## Table of Contents
@@ -112,7 +114,7 @@ uv sync
 
 This installs all dependencies listed in `pyproject.toml`.
 
-4. Download dataset(see [official documentation](https://www.kaggle.com/docs/api)).
+4. Download dataset (see [official documentation](https://www.kaggle.com/docs/api)).
 
 ```bash
 kaggle datasets download -d ronakbadhe/chess-evaluations -p data/raw --unzip
