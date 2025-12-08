@@ -74,7 +74,6 @@ CENTRAL_SQUARES: set[int] = {chess.E4, chess.D4, chess.E5, chess.D5}
 def apply_custom_style() -> None:
     plt.style.use("ggplot")
     plt.rcParams.update({
-        "text.usetex": True,
         "figure.figsize": (12, 6),
         "font.size": 20,
         "axes.titlesize": 22,
@@ -86,8 +85,7 @@ def apply_custom_style() -> None:
         "ytick.color": "black",
         "text.color": "black",
         "font.weight": "bold",
-            
-        "text.usetex": False,   # Disable LaTeX
+        "text.usetex": True,
         "mathtext.fontset": "dejavusans",
         "font.family": "sans-serif",
     })

@@ -77,7 +77,7 @@ class DataManager:
             test_size: float = TEST_SIZE,
             downcast: bool = True,
             random_state: int = RANDOM_STATE,
-            cleaner: Callable[[pd.DataFrame], pd.DataFrame] | None = clean,
+            cleaner: Optional[Callable[[pd.DataFrame], pd.DataFrame]] | None = clean,
             transformers=None,
             features: Optional[List[str]] = None,
             meta: Optional[dict] = None,
